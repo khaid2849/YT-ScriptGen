@@ -1,5 +1,4 @@
 import json
-
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -19,7 +18,7 @@ async def create_transcription(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Start transcription process for a YouTube video"""
+    """Start transcription process for a YouTube video - No authentication required"""
     
     # Validate YouTube URL
     downloader = YouTubeDownloader()
@@ -33,7 +32,6 @@ async def create_transcription(
     
     # Create script record
     db_script = Script(
-        user_id=None,  # No user authentication
         video_url=str(script_data.video_url),
         video_title=video_info.get('title'),
         status='pending'
@@ -45,8 +43,7 @@ async def create_transcription(
     # Start async processing
     task = process_youtube_video.delay(
         script_id=db_script.id,
-        video_url=str(script_data.video_url),
-        user_id=None  # No user authentication
+        video_url=str(script_data.video_url)
     )
     
     return ProcessingStatus(
@@ -84,47 +81,32 @@ def get_transcription_status(task_id: str, db: Session = Depends(get_db)):
     if task_data_str:
         task_data = json.loads(task_data_str)
         script_id = task_data.get('script_id')
-    else:
-        script_id = None
+        
+        # Check if script exists and is completed
+        if script_id:
+            script = db.query(Script).filter(Script.id == script_id).first()
+            if script:
+                if script.status == 'completed':
+                    return ProcessingStatus(
+                        task_id=task_id,
+                        status='completed',
+                        progress=100,
+                        message='Transcription completed!',
+                        script_id=script.id
+                    )
+                elif script.status == 'failed':
+                    return ProcessingStatus(
+                        task_id=task_id,
+                        status='failed',
+                        progress=0,
+                        message=script.error_message or 'Transcription failed',
+                        script_id=script.id
+                    )
     
-    # Check Celery task state
-    task = process_youtube_video.AsyncResult(task_id)
-    
-    print(f"Task {task_id} Celery state: {task.state}, script_id: {script_id}")
-    
-    if task.state == 'PENDING':
-        response = {
-            'task_id': task_id,
-            'status': 'pending',
-            'progress': 0,
-            'message': 'Task is waiting to be processed',
-            'script_id': script_id
-        }
-    elif task.state == 'PROGRESS':
-        meta = task.info or {}
-        response = {
-            'task_id': task_id,
-            'status': 'processing',
-            'progress': meta.get('current', 0),
-            'message': meta.get('status', 'Processing...'),
-            'script_id': script_id
-        }
-    elif task.state == 'SUCCESS':
-        # Even on success, prefer our Redis data
-        response = {
-            'task_id': task_id,
-            'status': 'completed',
-            'progress': 100,
-            'message': 'Script generated successfully',
-            'script_id': script_id
-        }
-    else:  # FAILURE
-        response = {
-            'task_id': task_id,
-            'status': 'failed',
-            'progress': 0,
-            'message': str(task.info) if task.info else 'Task failed',
-            'script_id': script_id
-        }
-    
-    return ProcessingStatus(**response)
+    # Default response
+    return ProcessingStatus(
+        task_id=task_id,
+        status='processing',
+        progress=50,
+        message='Processing video...'
+    )

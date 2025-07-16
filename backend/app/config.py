@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # API
     API_V1_STR: str = "/api/v1"
     
-    # Database - Now os.getenv will work
+    # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/scriptgen")
     
     # Redis
@@ -28,11 +28,6 @@ class Settings(BaseSettings):
     # Celery
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1")
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/2")
-    
-    # JWT
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # File Paths
     TEMP_AUDIO_PATH: str = "./temp_audio"
@@ -46,7 +41,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 500 * 1024 * 1024  # 500MB
     
     # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: list = ["*"]  # Allow all origins
 
 settings = Settings()
 

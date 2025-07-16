@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 
 @celery_app.task(bind=True, name='process_youtube_video')
-def process_youtube_video(self, script_id: int, video_url: str, user_id: int = None):
-    """Main task to process YouTube video"""
+def process_youtube_video(self, script_id: int, video_url: str):
+    """Main task to process YouTube video - No user authentication"""
     
     # Import here to avoid circular imports
     from ..database import SessionLocal
@@ -60,134 +60,76 @@ def process_youtube_video(self, script_id: int, video_url: str, user_id: int = N
         # Get script record
         script = db.query(Script).filter(Script.id == script_id).first()
         if not script:
-            raise Exception("Script record not found")
+            raise Exception(f"Script with ID {script_id} not found")
         
-        # Update status to processing
+        # Update script status
         script.status = 'processing'
         db.commit()
         
-        # Step 1: Extract video info and download audio
-        update_task_status(20, 'Downloading audio...')
-        
-        print(f"Downloading audio from: {video_url}")
-        audio_path, video_info = downloader.download_audio(video_url)
-        print(f"Audio downloaded to: {audio_path}")
+        # Extract video info
+        update_task_status(20, 'Downloading audio from video...')
+        video_info = downloader.extract_video_info(video_url)
         
         # Update script with video info
-        script.video_title = video_info['title']
-        script.video_duration = video_info['duration']
+        script.video_title = video_info.get('title')
+        script.video_duration = video_info.get('duration')
         db.commit()
         
-        # Step 2: Transcribe audio
-        update_task_status(50, 'Transcribing audio... This may take a few minutes...')
+        # Download audio
+        audio_path = downloader.download_audio(video_url)
+        print(f"Audio downloaded to: {audio_path}")
         
-        print(f"Starting transcription of audio file: {audio_path}")
+        # Transcribe audio
+        update_task_status(50, 'Transcribing audio using AI...')
         transcript_data = transcriber.transcribe_audio(audio_path)
-        print(f"Transcription completed. Found {len(transcript_data['segments'])} segments")
         
-        # Step 3: Format and save script
-        update_task_status(80, 'Formatting script...')
+        # Format transcript
+        update_task_status(80, 'Formatting transcript...')
+        formatted_script = transcriber.format_transcript_as_list(transcript_data['segments'])
         
-        # Format as list of script objects
-        formatted_script_list = transcriber.format_transcript_as_list(
-            transcript_data['segments']
-        )
-        
-        # Also format as string for file saving
-        formatted_script_string = transcriber.format_transcript(
-            transcript_data['segments'], 
-            format_type='timestamps'
-        )
-        
-        file_path = formatter.save_script(
-            video_info=video_info,
-            transcript_data=transcript_data,
-            format_type='txt',
-            script_id=script_id
-        )
-        print(f"Script saved to: {file_path}")
-        
-        # Update script record
+        # Update script with results
         script.transcript_text = transcript_data['text']
-        script.formatted_script = formatted_script_list  # Store as list
-        script.file_path = file_path
+        script.formatted_script = formatted_script  # Now storing as JSON list
         script.status = 'completed'
         script.completed_at = datetime.utcnow()
         db.commit()
         
-        # Cleanup
-        if audio_path and os.path.exists(audio_path):
-            downloader.cleanup_audio(audio_path)
-            print(f"Cleaned up audio file: {audio_path}")
+        # Final update
+        update_task_status(100, 'Transcription completed!', {'state': 'SUCCESS'})
         
-        # Final update with success
-        update_task_status(100, 'Script generated successfully!', {
-            'file_path': file_path,
-            'completed': True
-        })
-        
-        print(f"Successfully processed video: {video_url}")
-        
-        # Return result (even though we're storing in Redis)
+        print(f"Successfully processed script {script_id}")
         return {
             'script_id': script_id,
             'status': 'completed',
-            'file_path': file_path
+            'message': 'Video processed successfully'
         }
         
     except Exception as e:
-        # Log error
-        error_msg = f"Error processing video: {str(e)}"
-        error_trace = traceback.format_exc()
-        print(f"ERROR: {error_msg}")
-        print(f"Traceback: {error_trace}")
+        print(f"Error processing video: {str(e)}")
+        print(traceback.format_exc())
         
-        # Update script record with error
-        try:
-            if 'script' in locals() and script:
-                script.status = 'failed'
-                script.error_message = str(e)
-                db.commit()
-        except Exception as db_error:
-            print(f"Failed to update database: {str(db_error)}")
-            db.rollback()
+        # Update script with error
+        if script:
+            script.status = 'failed'
+            script.error_message = str(e)
+            db.commit()
         
-        # Store error in Redis
-        error_data = {
-            'task_id': self.request.id,
-            'script_id': script_id,
-            'progress': 0,
-            'status': f'Failed: {str(e)}',
-            'state': 'FAILURE',
-            'error': str(e),
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        redis_client.set(
-            f"task_result:{self.request.id}", 
-            json.dumps(error_data), 
-            ex=3600
-        )
-        
-        # Cleanup
-        if audio_path and os.path.exists(audio_path):
-            try:
-                downloader.cleanup_audio(audio_path)
-            except:
-                pass
-        
-        # Update task state
-        self.update_state(
-            state='FAILURE',
-            meta={
-                'current': 0, 
-                'total': 100, 
-                'status': f'Failed: {str(e)}',
-                'exc_type': type(e).__name__,
-                'exc_message': str(e)
-            }
+        # Update task status
+        update_task_status(
+            0, 
+            f'Processing failed: {str(e)}', 
+            {'state': 'FAILURE', 'error': str(e)}
         )
         
         raise
         
     finally:
+        # Cleanup
+        if audio_path and os.path.exists(audio_path):
+            try:
+                os.remove(audio_path)
+                print(f"Cleaned up audio file: {audio_path}")
+            except:
+                pass
+        
         db.close()

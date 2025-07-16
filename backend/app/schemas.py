@@ -1,31 +1,14 @@
 from pydantic import BaseModel, HttpUrl
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-from enum import Enum
 
-# Enums
-class ScriptStatus(str, Enum):
-    pending = "pending"
-    processing = "processing"
-    completed = "completed"
-    failed = "failed"
-
-# Script Schemas
-class ScriptBase(BaseModel):
+# Script related schemas
+class ScriptCreate(BaseModel):
     video_url: HttpUrl
-
-class ScriptCreate(ScriptBase):
-    pass
-
-class ScriptUpdate(BaseModel):
-    status: Optional[str] = None
-    transcript_text: Optional[str] = None
-    formatted_script: Optional[str] = None
-    error_message: Optional[str] = None
-
-class Script(ScriptBase):
+    
+class ScriptBase(BaseModel):
     id: int
-    user_id: Optional[int]
+    video_url: str
     video_title: Optional[str]
     video_duration: Optional[int]
     status: str
@@ -33,17 +16,20 @@ class Script(ScriptBase):
     completed_at: Optional[datetime]
     
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-class ScriptWithContent(Script):
+class ScriptWithContent(ScriptBase):
     transcript_text: Optional[str]
-    formatted_script: Optional[str]
+    formatted_script: Optional[List[Dict[str, Any]]]
     error_message: Optional[str]
+    
+    class Config:
+        orm_mode = True
 
-# Response Schemas
+# Processing status schema
 class ProcessingStatus(BaseModel):
     task_id: str
-    status: str
+    status: str  # processing, completed, failed
     progress: int
     message: str
     script_id: Optional[int] = None

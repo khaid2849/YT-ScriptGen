@@ -17,10 +17,10 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set up CORS
+# Set up CORS - Allow all origins for public access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Your frontend URL
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,7 +46,7 @@ app.include_router(
 @app.get("/")
 def root():
     return {
-        "message": "YouTube Script Generator API",
+        "message": "YouTube Script Generator API - Free & Open",
         "version": settings.APP_VERSION,
         "docs": "/docs"
     }
