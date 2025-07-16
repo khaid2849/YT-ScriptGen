@@ -9,11 +9,29 @@ A web application that automatically converts YouTube videos into timestamped te
 - 📄 Multiple export formats (TXT, JSON)
 - ⚡ Real-time processing updates
 
+## 🗒️ Prerequisites
+Before you begin, ensure you have the following installed on your system:
+- Redis
+- Postgresql
+- Node.js
+- Configure required environment variables file .env in /backend and /frontend folder:
+```bash
+#YT-ScriptGen/backend/.env
+DATABASE_URL=postgresql://scriptgen_admin:123456@localhost/scriptgen
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/1
+CELERY_RESULT_BACKEND=redis://localhost:6379/2
+SECRET_KEY={{YOUR SECRET KEY}}
+
+#YT-ScriptGen/frontend/.env
+REACT_APP_API_URL=http://localhost:8000/api/v1
+```
+
 ## 🚀 Quick Start
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/youtube-script-generator.git
+git clone https://github.com/yourusername/YT-ScriptGen.git
 
 # Backend setup
 pip install -r requirements.txt
