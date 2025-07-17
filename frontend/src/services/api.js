@@ -33,4 +33,9 @@ export const scriptsAPI = {
     }),
 };
 
+// Contact API
+export const contactAPI = {
+  sendMessage: (data) => api.post("/contact/", data),
+};
+
 export default api;

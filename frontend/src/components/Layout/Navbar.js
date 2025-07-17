@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const location = useLocation();
@@ -16,12 +16,12 @@ const Navbar = () => {
             <Link to="/" className="text-2xl font-bold text-gray-900">
               ScriptGen
             </Link>
-            
+
             <div className="hidden md:flex ml-10 space-x-8">
               <Link
                 to="/"
                 className={`${
-                  isActiveLink('/') ? 'text-blue-600' : 'text-gray-500'
+                  isActiveLink("/") ? "text-blue-600" : "text-gray-500"
                 } hover:text-gray-900 px-3 py-2 text-sm font-medium`}
               >
                 Home
@@ -29,7 +29,7 @@ const Navbar = () => {
               <Link
                 to="/generate"
                 className={`${
-                  isActiveLink('/generate') ? 'text-blue-600' : 'text-gray-500'
+                  isActiveLink("/generate") ? "text-blue-600" : "text-gray-500"
                 } hover:text-gray-900 px-3 py-2 text-sm font-medium`}
               >
                 Generate
@@ -37,7 +37,7 @@ const Navbar = () => {
               <Link
                 to="/contact"
                 className={`${
-                  isActiveLink('/contact') ? 'text-blue-600' : 'text-gray-500'
+                  isActiveLink("/contact") ? "text-blue-600" : "text-gray-500"
                 } hover:text-gray-900 px-3 py-2 text-sm font-medium`}
               >
                 Contact
@@ -45,8 +45,10 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <span className="text-sm text-gray-600">Free YouTube Script Generator</span>
+          <div class="flex items-center">
+            <span class="text-sm text-gray-700 italic font-medium">
+              Seriously, it's free. We checked. 😉
+            </span>
           </div>
         </div>
       </div>
