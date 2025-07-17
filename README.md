@@ -17,12 +17,25 @@ Before you begin, ensure you have the following installed on your system:
 - Configure required environment variables file .env in /backend and /frontend folder:
 ```bash
 #YT-ScriptGen/backend/.env
-DATABASE_URL=postgresql://scriptgen_admin:123456@localhost/scriptgen
+# Database
+DATABASE_URL=postgresql://scriptgen_user:password@localhost/scriptgen
+
+# Redis
 REDIS_URL=redis://localhost:6379/0
 CELERY_BROKER_URL=redis://localhost:6379/1
 CELERY_RESULT_BACKEND=redis://localhost:6379/2
-SECRET_KEY={{YOUR SECRET KEY}}
 
+# Email Configuration (Optional - for contact form notifications)
+# For Gmail: Enable 2FA and use App Password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+ADMIN_EMAIL=admin@scriptgen.app
+# Note: If email is not configured, contact messages will only be saved to files
+```
+
+```bash
 #YT-ScriptGen/frontend/.env
 REACT_APP_API_URL=http://localhost:8000/api/v1
 ```
