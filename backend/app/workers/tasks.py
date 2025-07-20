@@ -1,11 +1,10 @@
-from celery import Task
-from .celery_app import celery_app
 import os
-import time
 import traceback
 import json
-from datetime import datetime
 
+from .celery_app import celery_app
+from datetime import datetime
+from typing import List
 
 @celery_app.task(bind=True, name="process_youtube_video")
 def process_youtube_video(self, script_id: int, video_url: str):
@@ -144,3 +143,158 @@ def process_youtube_video(self, script_id: int, video_url: str):
                     print(f"Failed to clean up audio file: {cleanup_error}")
 
         db.close()
+
+@celery_app.task(bind=True, name="download_video")
+def download_video_task(self, video_url: str, quality: str = "best"):
+    """Task to download a single YouTube video"""
+    
+    from ..core.youtube_downloader import YouTubeDownloader
+    from ..core.redis_client import get_redis_client
+    
+    downloader = YouTubeDownloader()
+    redis_client = get_redis_client()
+    
+    def update_task_status(progress, status, extra_data=None):
+        task_data = {
+            "task_id": self.request.id,
+            "progress": progress,
+            "status": status,
+            "state": "PROGRESS" if progress < 100 else "SUCCESS",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        if extra_data:
+            task_data.update(extra_data)
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(task_data),
+            ex=3600  # Expire in 1 hour
+        )
+        
+        self.update_state(
+            state="PROGRESS" if progress < 100 else "SUCCESS",
+            meta={"current": progress, "total": 100, "status": status}
+        )
+    
+    try:
+        # Update status
+        update_task_status(10, "Extracting video information...")
+        
+        # Extract video info
+        video_info = downloader.extract_video_info(video_url)
+        
+        # Update status
+        update_task_status(30, f"Downloading: {video_info['title']}...")
+        
+        # Download video
+        video_path = downloader.download_video(video_url, quality)
+        
+        # Update final status
+        update_task_status(
+            100,
+            "Download completed!",
+            {
+                "state": "SUCCESS",
+                "file_path": video_path,
+                "video_info": video_info
+            }
+        )
+        
+        return {
+            "file_path": video_path,
+            "video_info": video_info,
+            "status": "completed"
+        }
+        
+    except Exception as e:
+        # Update error status
+        error_data = {
+            "state": "FAILURE",
+            "error": str(e)
+        }
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(error_data),
+            ex=3600
+        )
+        
+        raise
+
+
+@celery_app.task(bind=True, name="download_multiple_videos")
+def download_multiple_videos_task(self, video_urls: List[str], quality: str = "best"):
+    """Task to download multiple YouTube videos"""
+    
+    from ..core.youtube_downloader import YouTubeDownloader
+    from ..core.redis_client import get_redis_client
+    
+    downloader = YouTubeDownloader()
+    redis_client = get_redis_client()
+    
+    def update_task_status(progress, status, extra_data=None):
+        task_data = {
+            "task_id": self.request.id,
+            "progress": progress,
+            "status": status,
+            "state": "PROGRESS" if progress < 100 else "SUCCESS",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        if extra_data:
+            task_data.update(extra_data)
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(task_data),
+            ex=3600
+        )
+        
+        self.update_state(
+            state="PROGRESS" if progress < 100 else "SUCCESS",
+            meta={"current": progress, "total": 100, "status": status}
+        )
+    
+    try:
+        total_videos = len(video_urls)
+        
+        # Update initial status
+        update_task_status(5, f"Starting download of {total_videos} videos...")
+        
+        # Calculate progress increments
+        progress_per_video = 90 / total_videos
+        current_progress = 5
+        
+        # Download videos and create zip
+        zip_path = downloader.download_multiple_videos(video_urls, quality)
+        
+        # Update final status
+        update_task_status(
+            100,
+            f"Successfully created zip file with videos",
+            {
+                "state": "SUCCESS",
+                "file_path": zip_path,
+                "total_videos": total_videos
+            }
+        )
+        
+        return {
+            "file_path": zip_path,
+            "total_videos": total_videos,
+            "status": "completed"
+        }
+        
+    except Exception as e:
+        # Update error status
+        error_data = {
+            "state": "FAILURE",
+            "error": str(e)
+        }
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(error_data),
+            ex=3600
+        )
+        
+        raise

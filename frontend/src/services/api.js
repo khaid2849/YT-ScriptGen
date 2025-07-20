@@ -38,4 +38,18 @@ export const contactAPI = {
   sendMessage: (data) => api.post("/contact/", data),
 };
 
+export const downloadAPI = {
+  downloadSingle: (data) => api.post("/download/video", data),
+  downloadMultiple: (data) => api.post("/download/videos", data),
+  getStatus: (taskId) => api.get(`/download/status/${taskId}`),
+  downloadDirect: (data) =>
+    api.post("/download/video/direct", data, { responseType: "blob" }),
+  downloadScriptVideo: (scriptId) =>
+    api.post(
+      `/download/script/${scriptId}/video`,
+      {},
+      { responseType: "blob" }
+    ),
+};
+
 export default api;

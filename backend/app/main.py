@@ -1,11 +1,11 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
-
 from .config import settings
 from .database import engine, Base
-from .api.endpoints import transcription, scripts, contact
+from .api.endpoints import transcription, scripts, contact, download
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -42,13 +42,22 @@ app.include_router(
 )
 
 app.include_router(
-    scripts.router, prefix=f"{settings.API_V1_STR}/scripts", tags=["scripts"]
+    scripts.router, 
+    prefix=f"{settings.API_V1_STR}/scripts", 
+    tags=["scripts"]
 )
 
 app.include_router(
-    contact.router, prefix=f"{settings.API_V1_STR}/contact", tags=["contact"]
+    contact.router, 
+    prefix=f"{settings.API_V1_STR}/contact", 
+    tags=["contact"]
 )
 
+app.include_router(
+    download.router,
+    prefix=f"{settings.API_V1_STR}/download",
+    tags=["download"]
+)
 
 @app.get("/")
 def root():
@@ -57,7 +66,6 @@ def root():
         "version": settings.APP_VERSION,
         "docs": "/docs",
     }
-
 
 @app.get("/health")
 def health_check():

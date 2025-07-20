@@ -1,17 +1,19 @@
-import React, { useState, useRef, useEffect } from "react";
-import { scriptsAPI } from "../../services/api";
+import React, { useState, useRef } from "react";
+import { scriptsAPI, downloadAPI } from "../../services/api";
 import toast from "react-hot-toast";
+import { Copy, FileText, FileJson, Video, Loader2 } from "lucide-react";
 
 const ScriptDisplay = ({ script, onNewScript }) => {
   const [activeTab, setActiveTab] = useState("formatted");
   const [downloading, setDownloading] = useState(false);
+  const [downloadingVideo, setDownloadingVideo] = useState(false);
   const [copying, setCopying] = useState(false);
-  const [isVideoCollapsed, setIsVideoCollapsed] = useState(false);
   const videoRef = useRef(null);
 
   // Extract video ID from URL for embedding
   const getVideoId = (url) => {
-    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
+    const regex =
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
     const match = url.match(regex);
     return match ? match[1] : null;
   };
@@ -41,16 +43,36 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     }
   };
 
+  const handleDownloadVideo = async () => {
+    setDownloadingVideo(true);
+    try {
+      const response = await downloadAPI.downloadScriptVideo(script.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${script.video_title || "video"}.mp4`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Video downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download video");
+    } finally {
+      setDownloadingVideo(false);
+    }
+  };
+
   const handleCopyToClipboard = async () => {
     setCopying(true);
     try {
       let textToCopy = "";
-      
+
       if (activeTab === "formatted") {
         textToCopy = script.formatted_script || script.transcript_text || "";
         if (typeof textToCopy === "object") {
           textToCopy = script.formatted_script
-            .map(item => `${item.timestamp}: ${item.script}`)
+            .map((item) => `${item.timestamp}: ${item.script}`)
             .join("\n\n");
         }
       } else if (activeTab === "plain") {
@@ -58,7 +80,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       } else if (activeTab === "json") {
         textToCopy = generateJSONContent();
       }
-      
+
       await navigator.clipboard.writeText(textToCopy);
       toast.success("Copied to clipboard!");
     } catch (error) {
@@ -73,250 +95,163 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       video_info: {
         title: script.video_title || "Untitled",
         url: script.video_url,
-        duration: formatDuration(script.video_duration)
+        duration: script.video_duration || 0,
       },
-      formatted_script: []
+      formatted_script: script.formatted_script || [],
+      transcript_text: script.transcript_text || "",
     };
-
-    if (script.formatted_script && Array.isArray(script.formatted_script)) {
-      jsonData.formatted_script = script.formatted_script.map(item => ({
-        time: item.timestamp || item.time || "",
-        text: item.script || item.text || ""
-      }));
-    }
-
     return JSON.stringify(jsonData, null, 2);
   };
 
-  const formatDuration = (seconds) => {
-    if (!seconds) return "0:00";
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
+  const formatTranscript = () => {
+    if (!script.formatted_script) return "No transcript available";
 
-  const renderContent = () => {
-    if (activeTab === "formatted") {
-      if (typeof script.formatted_script === "string") {
-        return script.formatted_script;
-      } else if (Array.isArray(script.formatted_script)) {
-        return script.formatted_script
-          .map(item => `${item.timestamp}: ${item.script}`)
-          .join("\n\n");
-      }
-      return script.transcript_text || "No formatted transcript available";
-    } else if (activeTab === "plain") {
-      return script.transcript_text || "No plain text transcript available";
-    } else if (activeTab === "json") {
-      return generateJSONContent();
+    if (typeof script.formatted_script === "string") {
+      return script.formatted_script;
     }
+
+    if (Array.isArray(script.formatted_script)) {
+      return script.formatted_script
+        .map((item) => `${item.timestamp}: ${item.script}`)
+        .join("\n\n");
+    }
+
+    return "No transcript available";
   };
 
   return (
-    <div className="space-y-8">
-      {/* Video Player Section - Collapsible on Mobile */}
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Video Player</h3>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Video Preview */}
+      {videoId && (
+        <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 bg-gray-50 border-b">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {script.video_title || "YouTube Video"}
+            </h3>
+          </div>
+          <div className="relative aspect-video">
+            <iframe
+              ref={videoRef}
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title="YouTube video player"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Script Display */}
+      <div className="bg-white rounded-lg shadow-lg">
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <div className="flex space-x-8 px-6 pt-4">
             <button
-              onClick={() => setIsVideoCollapsed(!isVideoCollapsed)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              onClick={() => setActiveTab("formatted")}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "formatted"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
             >
-              <svg className={`w-6 h-6 transform transition-transform ${isVideoCollapsed ? 'rotate-180' : ''}`} 
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              Formatted Script
+            </button>
+            <button
+              onClick={() => setActiveTab("plain")}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "plain"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Plain Text
+            </button>
+            <button
+              onClick={() => setActiveTab("json")}
+              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === "json"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              JSON
             </button>
           </div>
-          
-          <div className={`${isVideoCollapsed ? 'hidden' : 'block'} lg:block`}>
-            {videoId ? (
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                <iframe
-                  ref={videoRef}
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  src={`https://www.youtube.com/embed/${videoId}`}
-                  title={script.video_title}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            ) : (
-              <div className="bg-gray-100 rounded-lg p-8 text-center">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <p className="text-gray-500">Video preview not available</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Video Info Card */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-        <h2 className="text-2xl lg:text-3xl font-bold mb-4">
-          {script.video_title || "Untitled Video"}
-        </h2>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="text-blue-100 text-xs">Duration</p>
-              <p className="font-semibold">{formatDuration(script.video_duration)}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <div>
-              <p className="text-blue-100 text-xs">Words</p>
-              <p className="font-semibold">
-                {script.transcript_text ? script.transcript_text.split(" ").length : 0}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <div>
-              <p className="text-blue-100 text-xs">Generated</p>
-              <p className="font-semibold">{new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                d="M13 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <div>
-              <p className="text-blue-100 text-xs">Source</p>
-              <a 
-                href={script.video_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="font-semibold hover:underline"
-              >
-                YouTube
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Transcript Section */}
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="border-b border-gray-200">
-          <div className="px-4 sm:px-8 pt-6">
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
-              Generated Transcript
-            </h3>
-            <div className="flex flex-wrap gap-2 -mb-px">
-              <button
-                onClick={() => setActiveTab("formatted")}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm rounded-t-lg transition-all ${
-                  activeTab === "formatted"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                <span className="hidden sm:inline">Formatted with </span>Timestamps
-              </button>
-              <button
-                onClick={() => setActiveTab("plain")}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm rounded-t-lg transition-all ${
-                  activeTab === "plain"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                Plain Text
-              </button>
-              <button
-                onClick={() => setActiveTab("json")}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm rounded-t-lg transition-all ${
-                  activeTab === "json"
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                JSON
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Transcript Content */}
-        <div className="p-4 sm:p-8">
-          <div className={`${
-            activeTab === "json" 
-              ? "bg-gray-900 text-gray-100 font-mono text-xs sm:text-sm p-4 sm:p-6 rounded-xl" 
-              : "bg-gray-50 rounded-xl p-4 sm:p-6"
-          } max-h-[400px] sm:max-h-[500px] overflow-y-auto custom-scrollbar`}>
-            <pre className={`whitespace-pre-wrap ${
-              activeTab === "json" ? "" : "font-sans text-sm sm:text-base text-gray-700"
-            } leading-relaxed`}>
-              {renderContent()}
+        {/* Content Area */}
+        <div className="p-6">
+          <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+              {activeTab === "formatted" && formatTranscript()}
+              {activeTab === "plain" && script.transcript_text}
+              {activeTab === "json" && generateJSONContent()}
             </pre>
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => handleDownload(activeTab === "json" ? "json" : "txt")}
-              disabled={downloading}
-              className="flex-1 bg-gradient-to-r from-gray-900 to-gray-800 text-white py-3 sm:py-4 px-6 rounded-xl hover:from-gray-800 hover:to-gray-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              {downloading ? "Downloading..." : `Download ${activeTab === "json" ? "JSON" : "TXT"}`}
-            </button>
-
+          <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleCopyToClipboard}
               disabled={copying}
-              className="flex-1 bg-white text-gray-900 py-3 sm:py-4 px-6 rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 font-medium shadow-sm hover:shadow-md flex items-center justify-center gap-3"
+              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              {copying ? "Copying..." : "Copy to Clipboard"}
+              {copying ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Copy className="w-4 h-4 mr-2" />
+              )}
+              Copy to Clipboard
+            </button>
+
+            <button
+              onClick={() => handleDownload("txt")}
+              disabled={downloading}
+              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 mr-2" />
+              )}
+              Download TXT
+            </button>
+
+            <button
+              onClick={() => handleDownload("json")}
+              disabled={downloading}
+              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileJson className="w-4 h-4 mr-2" />
+              )}
+              Download JSON
+            </button>
+
+            <button
+              onClick={handleDownloadVideo}
+              disabled={downloadingVideo}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {downloadingVideo ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Video className="w-4 h-4 mr-2" />
+              )}
+              Download Video
             </button>
           </div>
 
-          {/* Generate Another Button */}
-          <div className="mt-6 text-center">
+          {/* New Script Button */}
+          <div className="mt-6 pt-6 border-t">
             <button
               onClick={onNewScript}
-              className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mx-auto group"
+              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
             >
-              Generate Another Script
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" 
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
+              Generate New Script
             </button>
           </div>
         </div>

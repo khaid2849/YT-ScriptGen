@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { transcriptionAPI, scriptsAPI } from '../services/api';
-import ScriptDisplay from '../components/Generate/ScriptDisplay';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { transcriptionAPI, scriptsAPI } from "../services/api";
+import ScriptDisplay from "../components/Generate/ScriptDisplay";
+import toast from "react-hot-toast";
 
 const GeneratePage = () => {
-  const [url, setUrl] = useState('');
-  const [status, setStatus] = useState('idle'); // idle, processing, completed, failed
+  const [url, setUrl] = useState("");
+  const [status, setStatus] = useState("idle"); // idle, processing, completed, failed
   const [taskId, setTaskId] = useState(null);
   const [scriptId, setScriptId] = useState(null);
   const [scriptData, setScriptData] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     let interval;
-    
-    if (taskId && status === 'processing') {
+
+    if (taskId && status === "processing") {
       interval = setInterval(() => {
         checkTaskStatus(taskId);
       }, 2000); // Poll every 2 seconds
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -31,84 +31,92 @@ const GeneratePage = () => {
       /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/,
       /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]{11}$/,
       /^(https?:\/\/)?(www\.)?youtube\.com\/embed\/[\w-]{11}$/,
-      /^(https?:\/\/)?(www\.)?youtu\.be\/[\w-]{11}$/
+      /^(https?:\/\/)?(www\.)?youtu\.be\/[\w-]{11}$/,
     ];
-    
-    return patterns.some(pattern => pattern.test(url));
+
+    return patterns.some((pattern) => pattern.test(url));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!url.trim()) {
-      toast.error('Please enter a YouTube URL');
+      toast.error("Please enter a YouTube URL");
       return;
     }
-    
+
     if (!validateYouTubeUrl(url)) {
-      toast.error('Please enter a valid YouTube URL');
+      toast.error("Please enter a valid YouTube URL");
       return;
     }
-    
+
     try {
-      setStatus('processing');
+      setStatus("processing");
       setProgress(0);
-      setStatusMessage('Starting transcription...');
-      
+      setStatusMessage("Starting transcription...");
+
       const response = await transcriptionAPI.create({ video_url: url });
-      
+
       setTaskId(response.data.task_id);
       setProgress(response.data.progress);
       setStatusMessage(response.data.message);
-      
-      toast.success('Video processing started!');
+
+      toast.success("Video processing started!");
     } catch (error) {
-      console.error('Error starting transcription:', error);
-      setStatus('failed');
-      toast.error(error.response?.data?.detail || 'Failed to start transcription');
+      console.error("Error starting transcription:", error);
+      setStatus("failed");
+      toast.error(
+        error.response?.data?.detail || "Failed to start transcription"
+      );
     }
   };
 
   const checkTaskStatus = async (taskId) => {
     try {
+      console.log("Checking status for task:", taskId);
       const response = await transcriptionAPI.getStatus(taskId);
       const data = response.data;
-      
+      console.log("Status response:", data);
+
       setProgress(data.progress);
       setStatusMessage(data.message);
-      
-      if (data.status === 'completed' && data.script_id) {
-        setStatus('completed');
+
+      if (data.status === "completed" && data.script_id) {
+        console.log("Task completed with script_id:", data.script_id);
+        setStatus("completed");
         setScriptId(data.script_id);
         await fetchScript(data.script_id);
-        toast.success('Transcription completed!');
-      } else if (data.status === 'failed') {
-        setStatus('failed');
-        toast.error(data.message || 'Transcription failed');
+        toast.success("Transcription completed!");
+      } else if (data.status === "failed") {
+        console.log("Task failed:", data);
+        setStatus("failed");
+        toast.error(data.message || "Transcription failed");
       }
     } catch (error) {
-      console.error('Failed to check status:', error);
+      console.error("Failed to check status:", error);
     }
   };
 
   const fetchScript = async (id) => {
     try {
+      console.log("Fetching script with ID:", id);
       const response = await scriptsAPI.getById(id);
+      console.log("Script response:", response.data);
       setScriptData(response.data);
     } catch (error) {
-      console.error('Error fetching script:', error);
-      toast.error('Failed to fetch script');
+      console.error("Error fetching script:", error);
+      toast.error("Failed to fetch script");
     }
   };
 
   const handleReset = () => {
-    setStatus('idle');
+    setStatus("idle");
     setTaskId(null);
     setScriptId(null);
     setScriptData(null);
     setProgress(0);
-    setStatusMessage('');
-    setUrl('');
+    setStatusMessage("");
+    setUrl("");
   };
 
   return (
@@ -118,12 +126,14 @@ const GeneratePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {status === 'completed' ? 'Your Script is Ready!' : 'Generate Your Script'}
+              {status === "completed"
+                ? "Your Script is Ready!"
+                : "Generate Your Script"}
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              {status === 'completed' 
-                ? 'Your video has been successfully transcribed. Download or copy your script below.'
-                : 'Transform any YouTube video into a professionally formatted transcript with timestamps.'}
+              {status === "completed"
+                ? "Your video has been successfully transcribed. Download or copy your script below."
+                : "Transform any YouTube video into a professionally formatted transcript with timestamps."}
             </p>
           </div>
         </div>
@@ -131,11 +141,14 @@ const GeneratePage = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {status === 'idle' && (
+        {status === "idle" && (
           <div className="max-w-3xl mx-auto">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-white rounded-lg shadow-lg p-8">
-                <label htmlFor="youtube-url" className="block text-lg font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="youtube-url"
+                  className="block text-lg font-medium text-gray-700 mb-2"
+                >
                   YouTube URL
                 </label>
                 <input
@@ -151,7 +164,7 @@ const GeneratePage = () => {
                   Paste any public YouTube video URL to generate a transcript
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <button
                   type="submit"
@@ -164,20 +177,37 @@ const GeneratePage = () => {
           </div>
         )}
 
-        {status === 'processing' && (
+        {status === "processing" && (
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                  <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="w-8 h-8 text-blue-600 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Your Video</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Processing Your Video
+                </h2>
                 <p className="text-gray-600">{statusMessage}</p>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="relative">
                   <div className="flex mb-2 items-center justify-between">
@@ -193,13 +223,13 @@ const GeneratePage = () => {
                     </div>
                   </div>
                   <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-                    <div 
-                      style={{ width: `${progress}%` }} 
+                    <div
+                      style={{ width: `${progress}%` }}
                       className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
                     ></div>
                   </div>
                 </div>
-                
+
                 <div className="text-sm text-gray-500 text-center">
                   This may take a few minutes depending on the video length...
                 </div>
@@ -208,20 +238,56 @@ const GeneratePage = () => {
           </div>
         )}
 
-        {status === 'completed' && scriptData && (
-          <ScriptDisplay script={scriptData} onNewScript={handleReset} />
+        {status === "completed" && (
+          <div>
+            {scriptData ? (
+              <ScriptDisplay script={scriptData} onNewScript={handleReset} />
+            ) : (
+              <div className="max-w-3xl mx-auto">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                  <h3 className="text-lg font-medium text-yellow-800 mb-2">
+                    Script data not available
+                  </h3>
+                  <p className="text-yellow-700 mb-4">
+                    The transcription completed but script data could not be loaded.
+                  </p>
+                  <button
+                    onClick={handleReset}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
-        {status === 'failed' && (
+        {status === "failed" && (
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Failed</h2>
-              <p className="text-gray-600 mb-6">{statusMessage || 'Something went wrong while processing your video.'}</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Processing Failed
+              </h2>
+              <p className="text-gray-600 mb-6">
+                {statusMessage ||
+                  "Something went wrong while processing your video."}
+              </p>
               <button
                 onClick={handleReset}
                 className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"

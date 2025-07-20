@@ -16,7 +16,7 @@ class ScriptBase(BaseModel):
     completed_at: Optional[datetime]
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ScriptWithContent(ScriptBase):
     transcript_text: Optional[str]
@@ -24,7 +24,7 @@ class ScriptWithContent(ScriptBase):
     error_message: Optional[str]
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Processing status schema
 class ProcessingStatus(BaseModel):
@@ -33,3 +33,23 @@ class ProcessingStatus(BaseModel):
     progress: int
     message: str
     script_id: Optional[int] = None
+
+class VideoDownloadRequest(BaseModel):
+    url: HttpUrl
+    quality: str = "best"  # Options: "best", "720p", "480p"
+
+class MultipleVideoDownloadRequest(BaseModel):
+    urls: List[HttpUrl]
+    quality: str = "best"
+
+class VideoDownloadResponse(BaseModel):
+    task_id: str
+    status: str
+    message: str
+
+class VideoDownloadStatus(BaseModel):
+    status: str  # "pending", "processing", "completed", "error"
+    progress: int
+    message: Optional[str] = None
+    download_url: Optional[str] = None
+    error: Optional[str] = None

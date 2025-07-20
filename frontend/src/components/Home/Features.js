@@ -15,7 +15,7 @@ const Features = () => {
     {
       icon: '📄',
       title: 'Multiple Formats',
-      description: 'Export as TXT, JSON, or Excel. Customize to fit your workflow.'
+      description: 'Export as TXT, JSON. Customize to fit your workflow.'
     }
   ];
 
