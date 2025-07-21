@@ -1,6 +1,6 @@
-# YouTube Script Generator & Video Downloader
+# YouTube Script Generator & Media Downloader
 
-A comprehensive web application that converts YouTube videos into timestamped text scripts and provides video downloading functionality.
+A comprehensive web application that converts YouTube videos into timestamped text scripts and provides video/audio downloading functionality with modern dark/light theme support.
 
 ## ✨ Features
 
@@ -8,16 +8,28 @@ A comprehensive web application that converts YouTube videos into timestamped te
 
 - 🔗 Simple YouTube URL input
 - ⏱️ Automatic timestamp generation
-- 📄 Multiple export formats (TXT, JSON)
+- 📄 Multiple export formats (TXT, JSON, Plain Text)
 - ⚡ Real-time processing updates
+- 📋 One-click copy to clipboard
+- 🎥 Video quality selection for downloads
 
-### Video Downloads
+### Media Downloads
 
-- 📥 Single video downloads
-- 📦 Bulk video downloads (up to 10 videos as ZIP)
-- 🎬 Multiple quality options (Best, 720p, 480p)
+- 📥 Single video/audio downloads
+- 📦 Bulk downloads (up to 10 files as ZIP)
+- 🎬 Multiple video quality options (Best, 720p, 480p)
+- 🎵 High-quality MP3 audio extraction
 - ⏳ Real-time download progress tracking
 - 📊 Download status monitoring
+- 🏷️ Smart filename generation using video titles
+
+### User Experience
+
+- 🌙 Dark/Light theme toggle with system preference detection
+- 📱 Fully responsive design for all devices
+- 💾 Theme preference persistence
+- ⚡ Smooth transitions and animations
+- 🎯 Intuitive two-column layout for generated content
 
 ## 🗒️ Prerequisites
 
@@ -105,55 +117,6 @@ The application will be available at:
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
-
-## 🎯 Usage
-
-### Script Generation
-
-1. Navigate to the Generate page
-2. Enter a YouTube URL
-3. Click "Generate Script"
-4. Monitor real-time progress
-5. Download formatted transcript in TXT or JSON format
-
-### Video Downloads
-
-1. Navigate to the Download page
-2. Choose single or multiple video mode
-3. Enter YouTube URL(s)
-4. Select desired quality (Best/720p/480p)
-5. Click download and monitor progress
-6. Download files when complete
-
-## 📝 Output Formats
-
-### Script Format
-
-```
-[00:00 - 00:05]: Hello welcome to my videos
-[00:06 - 00:10]: Let's have a look at the overview of what we gonna talk about today
-```
-
-### Download Formats
-
-- **Single Video**: Direct MP4 download
-- **Multiple Videos**: ZIP file containing all videos + download summary
-
-## 🔧 API Endpoints
-
-### Script Generation
-
-- `POST /api/v1/generate` - Generate script from YouTube URL
-- `GET /api/v1/task/{task_id}` - Check generation status
-- `GET /api/v1/script/{script_id}/download` - Download script file
-
-### Video Downloads
-
-- `POST /api/v1/download/video` - Download single video (async)
-- `POST /api/v1/download/video/direct` - Download single video (sync)
-- `POST /api/v1/download/videos` - Download multiple videos as ZIP
-- `GET /api/v1/download/status/{task_id}` - Check download status
-- `GET /api/v1/download/file/{task_id}` - Download completed file
 
 ## 📄 License
 
