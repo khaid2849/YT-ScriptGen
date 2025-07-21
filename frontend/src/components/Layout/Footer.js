@@ -6,9 +6,11 @@ const Footer = () => {
 
   const features = [
     "AI-Powered Transcription",
-    "Timestamp Generation",
+    "Timestamp Generation", 
     "JSON & TXT Export",
-    "Free as a bird, but way more useful",
+    "Video Download (MP4)",
+    "Audio Download (MP3)",
+    "Quality Selection",
   ];
 
   const quickLinks = [
@@ -49,7 +51,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 dark:text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand & Description */}
@@ -58,10 +60,10 @@ const Footer = () => {
               <span className="text-2xl mr-2">📝</span>
               <h3 className="text-2xl font-bold text-white">ScriptGen</h3>
             </div>
-            <p className="text-sm mb-6 max-w-md text-gray-400">
-              Free AI-powered YouTube video transcription tool. Convert any
-              video into professionally formatted scripts with timestamps in
-              seconds.
+            <p className="text-sm mb-6 max-w-md text-gray-400 dark:text-gray-300">
+              Free AI-powered YouTube tool for transcription and downloads. Convert videos into 
+              professionally formatted scripts with timestamps, plus download videos and audio 
+              in multiple formats.
             </p>
 
             {/* Features List */}
@@ -69,7 +71,7 @@ const Footer = () => {
               {features.map((feature, index) => (
                 <div key={index} className="flex items-center text-sm">
                   <svg
-                    className="w-4 h-4 mr-2 text-green-500"
+                    className="w-4 h-4 mr-2 text-green-500 dark:text-green-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -93,7 +95,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link
                     to={link.path}
-                    className="text-gray-400 hover:text-white transition duration-200 text-sm"
+                    className="text-gray-400 dark:text-gray-300 hover:text-white transition duration-200 text-sm"
                   >
                     {link.name}
                   </Link>
@@ -105,21 +107,21 @@ const Footer = () => {
           {/* About */}
           <div>
             <h4 className="text-white font-semibold mb-4">About</h4>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-sm text-gray-400 dark:text-gray-300 mb-4">
               ScriptGen is a free tool built to help content creators, students,
-              and researchers easily transcribe YouTube videos.
+              and researchers easily transcribe YouTube videos and download content.
             </p>
-            <p className="text-sm text-gray-400">
-              No sign-up required. No hidden fees. Just paste and generate.
+            <p className="text-sm text-gray-400 dark:text-gray-300">
+              Generate scripts, download videos/audio in multiple formats. No sign-up required. No hidden fees.
             </p>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-gray-800">
+        <div className="pt-8 border-t border-gray-800 dark:border-gray-700">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-gray-300">
                 © {currentYear} ScriptGen by Khaid. All rights reserved.
               </p>
             </div>
@@ -132,7 +134,7 @@ const Footer = () => {
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition duration-200"
+                  className="text-gray-400 dark:text-gray-300 hover:text-white transition duration-200"
                   aria-label={social.name}
                 >
                   {social.icon}

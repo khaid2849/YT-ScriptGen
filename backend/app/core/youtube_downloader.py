@@ -37,12 +37,13 @@ class YouTubeDownloader:
 
     def download_audio(self, url: str) -> str:
         """Download audio from YouTube video and return the file path"""
-        # Extract video info first to get video ID
+        # Extract video info first to get video title
         info = self.extract_video_info(url)
         video_id = info["video_id"]
+        clean_title = self._sanitize_filename(info["title"])
 
-        # Set output filename
-        output_filename = f"{video_id}.%(ext)s"
+        # Set output filename using video title
+        output_filename = f"{clean_title}_{video_id}.%(ext)s"
         output_template = os.path.join(self.output_path, output_filename)
 
         ydl_opts = {
@@ -68,7 +69,7 @@ class YouTubeDownloader:
 
                 # Get the actual output filename
                 # After conversion, the file will have .mp3 extension
-                audio_path = os.path.join(self.output_path, f"{video_id}.mp3")
+                audio_path = os.path.join(self.output_path, f"{clean_title}_{video_id}.mp3")
 
                 # Verify the file exists
                 if os.path.exists(audio_path):
@@ -78,7 +79,7 @@ class YouTubeDownloader:
                     # Check for other possible extensions
                     for ext in ["m4a", "webm", "opus", "wav"]:
                         possible_path = os.path.join(
-                            self.output_path, f"{video_id}.{ext}"
+                            self.output_path, f"{clean_title}_{video_id}.{ext}"
                         )
                         if os.path.exists(possible_path):
                             print(f"Audio downloaded successfully: {possible_path}")
@@ -254,6 +255,112 @@ class YouTubeDownloader:
             
             raise Exception(f"Failed to create zip file: {str(e)}")
 
+    def download_multiple_audios(self, urls: List[str]) -> str:
+        """Download audio from multiple videos and return them as a zip file"""
+        downloaded_files = []
+        failed_downloads = []
+        
+        # Create temporary directory for this batch
+        batch_id = os.urandom(8).hex()
+        batch_dir = os.path.join(self.video_output_path, f"audio_batch_{batch_id}")
+        os.makedirs(batch_dir, exist_ok=True)
+        
+        try:
+            # Download each audio
+            for i, url in enumerate(urls):
+                try:
+                    print(f"Downloading audio {i+1}/{len(urls)}: {url}")
+                    
+                    # Extract video info
+                    info = self.extract_video_info(url)
+                    video_id = info["video_id"]
+                    clean_title = self._sanitize_filename(info["title"])
+                    
+                    # Set output filename with index to avoid duplicates
+                    output_filename = f"{i+1:02d}_{clean_title}_{video_id}.%(ext)s"
+                    output_template = os.path.join(batch_dir, output_filename)
+                    
+                    ydl_opts = {
+                        "format": "bestaudio/best",
+                        "outtmpl": output_template,
+                        "quiet": True,
+                        "no_warnings": True,
+                        "prefer_ffmpeg": True,
+                        "postprocessors": [
+                            {
+                                "key": "FFmpegExtractAudio",
+                                "preferredcodec": "mp3",
+                                "preferredquality": "192",
+                            }
+                        ],
+                    }
+                    
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+                    
+                    # Find the downloaded audio file
+                    audio_filename = f"{clean_title}.mp3"
+                    audio_path = os.path.join(batch_dir, f"{i+1:02d}_{clean_title}_{video_id}.mp3")
+                    
+                    if os.path.exists(audio_path):
+                        downloaded_files.append({
+                            "path": audio_path,
+                            "filename": audio_filename,
+                            "url": url,
+                            "title": info["title"]
+                        })
+                    
+                except Exception as e:
+                    print(f"Failed to download audio from {url}: {str(e)}")
+                    failed_downloads.append({
+                        "url": url,
+                        "error": str(e)
+                    })
+            
+            # Create zip file
+            zip_filename = f"youtube_audios_{batch_id}.zip"
+            zip_path = os.path.join(self.video_output_path, zip_filename)
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                # Add downloaded audio files
+                for file_info in downloaded_files:
+                    zipf.write(file_info["path"], file_info["filename"])
+                
+                # Add download summary
+                summary = self._create_download_summary(downloaded_files, failed_downloads, "Audio")
+                zipf.writestr("download_summary.txt", summary)
+            
+            # Cleanup individual files
+            for file_info in downloaded_files:
+                try:
+                    os.remove(file_info["path"])
+                except:
+                    pass
+            
+            # Remove batch directory
+            try:
+                os.rmdir(batch_dir)
+            except:
+                pass
+            
+            return zip_path
+            
+        except Exception as e:
+            # Cleanup on error
+            for file_info in downloaded_files:
+                try:
+                    os.remove(file_info["path"])
+                except:
+                    pass
+            
+            if os.path.exists(batch_dir):
+                try:
+                    os.rmdir(batch_dir)
+                except:
+                    pass
+            
+            raise Exception(f"Failed to create audio zip file: {str(e)}")
+
     def _sanitize_filename(self, filename: str) -> str:
         """Sanitize filename for safe file system usage"""
         # Remove invalid characters
@@ -267,17 +374,17 @@ class YouTubeDownloader:
         
         return filename.strip()
 
-    def _create_download_summary(self, downloaded: List[Dict], failed: List[Dict]) -> str:
+    def _create_download_summary(self, downloaded: List[Dict], failed: List[Dict], content_type: str = "Video") -> str:
         """Create a summary of the download batch"""
-        summary = "YouTube Batch Download Summary\n"
+        summary = f"YouTube Batch {content_type} Download Summary\n"
         summary += "=" * 50 + "\n\n"
         
-        summary += f"Total videos requested: {len(downloaded) + len(failed)}\n"
+        summary += f"Total {content_type.lower()}s requested: {len(downloaded) + len(failed)}\n"
         summary += f"Successfully downloaded: {len(downloaded)}\n"
         summary += f"Failed downloads: {len(failed)}\n\n"
         
         if downloaded:
-            summary += "Successfully Downloaded Videos:\n"
+            summary += f"Successfully Downloaded {content_type}s:\n"
             summary += "-" * 30 + "\n"
             for i, file_info in enumerate(downloaded, 1):
                 summary += f"{i}. {file_info['title']}\n"

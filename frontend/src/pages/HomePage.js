@@ -19,9 +19,24 @@ const HomePage = () => {
       description: 'Export your transcripts as TXT or JSON files'
     },
     {
+      icon: '🎥',
+      title: 'Video Download',
+      description: 'Download YouTube videos in multiple quality options (Best, 720p, 480p)'
+    },
+    {
+      icon: '🎵',
+      title: 'Audio Download',
+      description: 'Extract and download high-quality MP3 audio from any YouTube video'
+    },
+    {
+      icon: '📦',
+      title: 'Batch Downloads',
+      description: 'Download multiple videos or audio files as convenient ZIP archives'
+    },
+    {
       icon: '⚡',
       title: 'Fast Processing',
-      description: 'Quick turnaround time for all video lengths'
+      description: 'Quick turnaround time for all video lengths and downloads'
     },
     {
       icon: '🌐',
@@ -43,27 +58,27 @@ const HomePage = () => {
     },
     {
       number: '2',
-      title: 'Process Video',
-      description: 'Our AI extracts audio and transcribes it automatically'
+      title: 'Choose Your Option',
+      description: 'Generate transcripts, download videos, or extract audio files'
     },
     {
       number: '3',
-      title: 'Download Script',
-      description: 'Get your formatted transcript with timestamps'
+      title: 'Get Your Content',
+      description: 'Download scripts, videos (MP4), or audio files (MP3) instantly'
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <section className="pt-20 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             YouTube Script Generator
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Convert any YouTube video into a perfectly formatted transcript with timestamps. 
-            Free, fast, and powered by advanced AI.
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+            Convert any YouTube video into perfectly formatted transcripts with timestamps, 
+            plus download videos and audio in multiple formats. Free, fast, and powered by advanced AI.
           </p>
           <Link
             to="/generate"
@@ -78,17 +93,17 @@ const HomePage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
             Why Choose Our Script Generator?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-gray-50 rounded-xl p-8 hover:shadow-lg transition duration-200">
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 hover:shadow-lg transition duration-200">
                 <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -98,7 +113,7 @@ const HomePage = () => {
       {/* How It Works Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
             How It Works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -107,8 +122,8 @@ const HomePage = () => {
                 <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{step.title}</h3>
+                <p className="text-gray-600 dark:text-gray-300">{step.description}</p>
               </div>
             ))}
           </div>
@@ -116,7 +131,7 @@ const HomePage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900 dark:bg-gray-950">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
             Ready to Generate Your First Script?

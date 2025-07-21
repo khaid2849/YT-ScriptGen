@@ -298,3 +298,155 @@ def download_multiple_videos_task(self, video_urls: List[str], quality: str = "b
         )
         
         raise
+
+
+@celery_app.task(bind=True, name="download_audio")
+def download_audio_task(self, video_url: str):
+    """Task to download audio from a single YouTube video"""
+    
+    from ..core.youtube_downloader import YouTubeDownloader
+    from ..core.redis_client import get_redis_client
+    
+    downloader = YouTubeDownloader()
+    redis_client = get_redis_client()
+    
+    def update_task_status(progress, status, extra_data=None):
+        task_data = {
+            "task_id": self.request.id,
+            "progress": progress,
+            "status": status,
+            "state": "PROGRESS" if progress < 100 else "SUCCESS",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        if extra_data:
+            task_data.update(extra_data)
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(task_data),
+            ex=3600
+        )
+        
+        self.update_state(
+            state="PROGRESS" if progress < 100 else "SUCCESS",
+            meta={"current": progress, "total": 100, "status": status}
+        )
+    
+    try:
+        # Update initial status
+        update_task_status(10, "Extracting video info...")
+        
+        # Get video info
+        video_info = downloader.extract_video_info(video_url)
+        
+        # Update status
+        update_task_status(30, "Starting audio extraction...")
+        
+        # Download audio
+        audio_path = downloader.download_audio(video_url)
+        
+        # Update final status
+        update_task_status(
+            100,
+            "Audio extraction completed",
+            {
+                "state": "SUCCESS",
+                "file_path": audio_path,
+                "video_info": video_info
+            }
+        )
+        
+        return {
+            "file_path": audio_path,
+            "video_info": video_info,
+            "status": "completed"
+        }
+        
+    except Exception as e:
+        # Update error status
+        error_data = {
+            "state": "FAILURE",
+            "error": str(e)
+        }
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(error_data),
+            ex=3600
+        )
+        
+        raise
+
+
+@celery_app.task(bind=True, name="download_multiple_audios")
+def download_multiple_audios_task(self, video_urls: List[str]):
+    """Task to download audio from multiple YouTube videos"""
+    
+    from ..core.youtube_downloader import YouTubeDownloader
+    from ..core.redis_client import get_redis_client
+    
+    downloader = YouTubeDownloader()
+    redis_client = get_redis_client()
+    
+    def update_task_status(progress, status, extra_data=None):
+        task_data = {
+            "task_id": self.request.id,
+            "progress": progress,
+            "status": status,
+            "state": "PROGRESS" if progress < 100 else "SUCCESS",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        if extra_data:
+            task_data.update(extra_data)
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(task_data),
+            ex=3600
+        )
+        
+        self.update_state(
+            state="PROGRESS" if progress < 100 else "SUCCESS",
+            meta={"current": progress, "total": 100, "status": status}
+        )
+    
+    try:
+        total_videos = len(video_urls)
+        
+        # Update initial status
+        update_task_status(5, f"Starting audio extraction from {total_videos} videos...")
+        
+        # Download audio files and create zip
+        zip_path = downloader.download_multiple_audios(video_urls)
+        
+        # Update final status
+        update_task_status(
+            100,
+            f"Successfully created zip file with audio files",
+            {
+                "state": "SUCCESS",
+                "file_path": zip_path,
+                "total_videos": total_videos
+            }
+        )
+        
+        return {
+            "file_path": zip_path,
+            "total_videos": total_videos,
+            "status": "completed"
+        }
+        
+    except Exception as e:
+        # Update error status
+        error_data = {
+            "state": "FAILURE",
+            "error": str(e)
+        }
+        
+        redis_client.set(
+            f"download_task:{self.request.id}",
+            json.dumps(error_data),
+            ex=3600
+        )
+        
+        raise

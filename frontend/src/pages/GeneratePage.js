@@ -120,17 +120,17 @@ const GeneratePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header Section */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {status === "completed"
                 ? "Your Script is Ready!"
                 : "Generate Your Script"}
             </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               {status === "completed"
                 ? "Your video has been successfully transcribed. Download or copy your script below."
                 : "Transform any YouTube video into a professionally formatted transcript with timestamps."}
@@ -144,10 +144,10 @@ const GeneratePage = () => {
         {status === "idle" && (
           <div className="max-w-3xl mx-auto">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8">
                 <label
                   htmlFor="youtube-url"
-                  className="block text-lg font-medium text-gray-700 mb-2"
+                  className="block text-lg font-medium text-gray-700 dark:text-gray-200 mb-2"
                 >
                   YouTube URL
                 </label>
@@ -157,10 +157,10 @@ const GeneratePage = () => {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   Paste any public YouTube video URL to generate a transcript
                 </p>
               </div>
@@ -179,11 +179,11 @@ const GeneratePage = () => {
 
         {status === "processing" && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
                   <svg
-                    className="w-8 h-8 text-blue-600 animate-spin"
+                    className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -202,35 +202,35 @@ const GeneratePage = () => {
                     ></path>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Processing Your Video
                 </h2>
-                <p className="text-gray-600">{statusMessage}</p>
+                <p className="text-gray-600 dark:text-gray-300">{statusMessage}</p>
               </div>
 
               <div className="space-y-4">
                 <div className="relative">
                   <div className="flex mb-2 items-center justify-between">
                     <div>
-                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 dark:text-blue-400 bg-blue-200 dark:bg-blue-900">
                         Progress
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-blue-600">
+                      <span className="text-xs font-semibold inline-block text-blue-600 dark:text-blue-400">
                         {progress}%
                       </span>
                     </div>
                   </div>
-                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200 dark:bg-blue-900">
                     <div
                       style={{ width: `${progress}%` }}
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 dark:bg-blue-400 transition-all duration-500"
                     ></div>
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-500 text-center">
+                <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
                   This may take a few minutes depending on the video length...
                 </div>
               </div>
@@ -244,11 +244,11 @@ const GeneratePage = () => {
               <ScriptDisplay script={scriptData} onNewScript={handleReset} />
             ) : (
               <div className="max-w-3xl mx-auto">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-                  <h3 className="text-lg font-medium text-yellow-800 mb-2">
+                <div className="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
+                  <h3 className="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-2">
                     Script data not available
                   </h3>
-                  <p className="text-yellow-700 mb-4">
+                  <p className="text-yellow-700 dark:text-yellow-300 mb-4">
                     The transcription completed but script data could not be loaded.
                   </p>
                   <button
@@ -265,10 +265,10 @@ const GeneratePage = () => {
 
         {status === "failed" && (
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+            <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/50 rounded-full mb-4">
                 <svg
-                  className="w-8 h-8 text-red-600"
+                  className="w-8 h-8 text-red-600 dark:text-red-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -281,10 +281,10 @@ const GeneratePage = () => {
                   ></path>
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Processing Failed
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 {statusMessage ||
                   "Something went wrong while processing your video."}
               </p>

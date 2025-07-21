@@ -1,13 +1,14 @@
 import React, { useState, useRef } from "react";
 import { scriptsAPI, downloadAPI } from "../../services/api";
 import toast from "react-hot-toast";
-import { Copy, FileText, FileJson, Video, Loader2 } from "lucide-react";
+import { Copy, Video, Loader2, Download, Volume2, ChevronDown } from "lucide-react";
 
 const ScriptDisplay = ({ script, onNewScript }) => {
   const [activeTab, setActiveTab] = useState("formatted");
-  const [downloading, setDownloading] = useState(false);
   const [downloadingVideo, setDownloadingVideo] = useState(false);
-  const [copying, setCopying] = useState(false);
+  const [downloadingAudio, setDownloadingAudio] = useState(false);
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState("best");
   const videoRef = useRef(null);
 
   // Extract video ID from URL for embedding
@@ -21,7 +22,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   const videoId = getVideoId(script.video_url);
 
   const handleDownload = async (format) => {
-    setDownloading(true);
     try {
       const response = await scriptsAPI.download(script.id, format);
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -38,15 +38,13 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       toast.success(`${format.toUpperCase()} file downloaded successfully!`);
     } catch (error) {
       toast.error("Failed to download file");
-    } finally {
-      setDownloading(false);
     }
   };
 
-  const handleDownloadVideo = async () => {
+  const handleDownloadVideo = async (quality = selectedQuality) => {
     setDownloadingVideo(true);
     try {
-      const response = await downloadAPI.downloadScriptVideo(script.id);
+      const response = await downloadAPI.downloadScriptVideoWithQuality(script.id, quality);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -55,7 +53,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Video downloaded successfully!");
+      toast.success(`Video (${quality}) downloaded successfully!`);
+      setShowQualityMenu(false);
     } catch (error) {
       toast.error("Failed to download video");
     } finally {
@@ -63,8 +62,27 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     }
   };
 
+  const handleDownloadAudio = async () => {
+    setDownloadingAudio(true);
+    try {
+      const response = await downloadAPI.downloadScriptAudio(script.id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${script.video_title || "audio"}.mp3`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Audio downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download audio");
+    } finally {
+      setDownloadingAudio(false);
+    }
+  };
+
   const handleCopyToClipboard = async () => {
-    setCopying(true);
     try {
       let textToCopy = "";
 
@@ -85,8 +103,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       toast.success("Copied to clipboard!");
     } catch (error) {
       toast.error("Failed to copy to clipboard");
-    } finally {
-      setCopying(false);
     }
   };
 
@@ -119,142 +135,210 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     return "No transcript available";
   };
 
+  const qualityOptions = [
+    { value: "best", label: "Best Quality" },
+    { value: "720p", label: "720p HD" },
+    { value: "480p", label: "480p SD" }
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Video Preview */}
-      {videoId && (
-        <div className="mb-8 bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-4 bg-gray-50 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {script.video_title || "YouTube Video"}
-            </h3>
-          </div>
-          <div className="relative aspect-video">
-            <iframe
-              ref={videoRef}
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            />
-          </div>
-        </div>
-      )}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Video Content Section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900">Video Content</h2>
+          
+          {/* Video Preview */}
+          {videoId && (
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="p-4 bg-gray-50 border-b">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {script.video_title || "YouTube Video"}
+                </h3>
+              </div>
+              <div className="relative aspect-video">
+                <iframe
+                  ref={videoRef}
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="YouTube video player"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+            </div>
+          )}
 
-      {/* Script Display */}
-      <div className="bg-white rounded-lg shadow-lg">
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-8 px-6 pt-4">
-            <button
-              onClick={() => setActiveTab("formatted")}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "formatted"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Formatted Script
-            </button>
-            <button
-              onClick={() => setActiveTab("plain")}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "plain"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Plain Text
-            </button>
-            <button
-              onClick={() => setActiveTab("json")}
-              className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "json"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              JSON
-            </button>
-          </div>
-        </div>
+          {/* Download Actions */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Download Options</h3>
+            <div className="space-y-3">
+              {/* Video Download with Quality Selection */}
+              <div className="relative">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleDownloadVideo()}
+                    disabled={downloadingVideo}
+                    className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-l-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {downloadingVideo ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Video className="w-4 h-4 mr-2" />
+                    )}
+                    Download Video ({selectedQuality})
+                  </button>
+                  <button
+                    onClick={() => setShowQualityMenu(!showQualityMenu)}
+                    className="px-3 py-3 bg-blue-600 text-white rounded-r-md shadow-sm hover:bg-blue-700 border-l border-blue-500"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {/* Quality Dropdown */}
+                {showQualityMenu && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                    {qualityOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSelectedQuality(option.value);
+                          setShowQualityMenu(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
+                          selectedQuality === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-        {/* Content Area */}
-        <div className="p-6">
-          <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-              {activeTab === "formatted" && formatTranscript()}
-              {activeTab === "plain" && script.transcript_text}
-              {activeTab === "json" && generateJSONContent()}
-            </pre>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              onClick={handleCopyToClipboard}
-              disabled={copying}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              {copying ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Copy className="w-4 h-4 mr-2" />
-              )}
-              Copy to Clipboard
-            </button>
-
-            <button
-              onClick={() => handleDownload("txt")}
-              disabled={downloading}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              {downloading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              Download TXT
-            </button>
-
-            <button
-              onClick={() => handleDownload("json")}
-              disabled={downloading}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              {downloading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <FileJson className="w-4 h-4 mr-2" />
-              )}
-              Download JSON
-            </button>
-
-            <button
-              onClick={handleDownloadVideo}
-              disabled={downloadingVideo}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {downloadingVideo ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Video className="w-4 h-4 mr-2" />
-              )}
-              Download Video
-            </button>
-          </div>
-
-          {/* New Script Button */}
-          <div className="mt-6 pt-6 border-t">
-            <button
-              onClick={onNewScript}
-              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
-            >
-              Generate New Script
-            </button>
+              {/* Audio Download */}
+              <button
+                onClick={handleDownloadAudio}
+                disabled={downloadingAudio}
+                className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+              >
+                {downloadingAudio ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Volume2 className="w-4 h-4 mr-2" />
+                )}
+                Download Audio (MP3)
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Script Section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-gray-900">Script</h2>
+          
+          <div className="bg-white rounded-lg shadow-lg">
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200">
+              <div className="flex space-x-8 px-6 pt-4">
+                <button
+                  onClick={() => setActiveTab("formatted")}
+                  className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === "formatted"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Text
+                </button>
+                <button
+                  onClick={() => setActiveTab("plain")}
+                  className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === "plain"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Plain Text
+                </button>
+                <button
+                  onClick={() => setActiveTab("json")}
+                  className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === "json"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  JSON
+                </button>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="p-6">
+              <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                  {activeTab === "formatted" && formatTranscript()}
+                  {activeTab === "plain" && script.transcript_text}
+                  {activeTab === "json" && generateJSONContent()}
+                </pre>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  onClick={handleCopyToClipboard}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy to Clipboard
+                </button>
+                
+                {activeTab === "formatted" && (
+                  <button
+                    onClick={() => handleDownload("txt")}
+                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Text
+                  </button>
+                )}
+                
+                {activeTab === "plain" && (
+                  <button
+                    onClick={() => handleDownload("txt")}
+                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Plain Text
+                  </button>
+                )}
+                
+                {activeTab === "json" && (
+                  <button
+                    onClick={() => handleDownload("json")}
+                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download JSON
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* New Script Button */}
+      <div className="mt-8">
+        <button
+          onClick={onNewScript}
+          className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+        >
+          Generate New Script
+        </button>
       </div>
     </div>
   );

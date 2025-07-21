@@ -41,12 +41,28 @@ export const contactAPI = {
 export const downloadAPI = {
   downloadSingle: (data) => api.post("/download/video", data),
   downloadMultiple: (data) => api.post("/download/videos", data),
+  downloadSingleAudio: (data) => api.post("/download/audio", data),
+  downloadMultipleAudio: (data) => api.post("/download/audios", data),
   getStatus: (taskId) => api.get(`/download/status/${taskId}`),
   downloadDirect: (data) =>
     api.post("/download/video/direct", data, { responseType: "blob" }),
+  downloadAudioDirect: (data) =>
+    api.post("/download/audio/direct", data, { responseType: "blob" }),
   downloadScriptVideo: (scriptId) =>
     api.post(
       `/download/script/${scriptId}/video`,
+      {},
+      { responseType: "blob" }
+    ),
+  downloadScriptVideoWithQuality: (scriptId, quality = "best") =>
+    api.post(
+      `/download/script/${scriptId}/video`,
+      { quality },
+      { responseType: "blob" }
+    ),
+  downloadScriptAudio: (scriptId) =>
+    api.post(
+      `/download/script/${scriptId}/audio`,
       {},
       { responseType: "blob" }
     ),

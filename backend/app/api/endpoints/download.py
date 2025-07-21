@@ -5,9 +5,9 @@ import os
 
 from ...database import get_db
 from ...models import Script
-from ...schemas import VideoDownloadRequest, MultipleVideoDownloadRequest, VideoDownloadResponse
+from ...schemas import VideoDownloadRequest, MultipleVideoDownloadRequest, VideoDownloadResponse, ScriptVideoDownloadRequest, AudioDownloadRequest, MultipleAudioDownloadRequest
 from ...core.youtube_downloader import YouTubeDownloader
-from ...workers.tasks import download_video_task, download_multiple_videos_task
+from ...workers.tasks import download_video_task, download_multiple_videos_task, download_audio_task, download_multiple_audios_task
 from ...core.redis_client import get_redis_client
 
 router = APIRouter()
@@ -238,6 +238,7 @@ async def download_file(task_id: str):
 @router.post("/script/{script_id}/video")
 async def download_script_video(
     script_id: int,
+    request: ScriptVideoDownloadRequest = ScriptVideoDownloadRequest(),
     db: Session = Depends(get_db)
 ):
     """Download the video for a specific script"""
@@ -246,10 +247,13 @@ async def download_script_video(
     if not script:
         raise HTTPException(status_code=404, detail="Script not found")
     
+    # Get quality from request or default to "best"
+    quality = request.quality if request else "best"
+    
     # Download video
     downloader = YouTubeDownloader()
     try:
-        video_path = downloader.download_video(script.video_url, "best")
+        video_path = downloader.download_video(script.video_url, quality)
         
         # Get filename
         filename = f"{script.video_title or 'video'}.mp4"
@@ -269,3 +273,154 @@ async def download_script_video(
             status_code=500,
             detail=f"Failed to download video: {str(e)}"
         )
+
+@router.post("/script/{script_id}/audio")
+async def download_script_audio(
+    script_id: int,
+    db: Session = Depends(get_db)
+):
+    """Download the audio for a specific script"""
+    # Get script
+    script = db.query(Script).filter(Script.id == script_id).first()
+    if not script:
+        raise HTTPException(status_code=404, detail="Script not found")
+    
+    # Download audio
+    downloader = YouTubeDownloader()
+    try:
+        audio_path = downloader.download_audio(script.video_url)
+        
+        # Get filename - sanitize the title for safe filename
+        clean_title = script.video_title or 'audio'
+        # Remove invalid characters for filename
+        invalid_chars = '<>:"/\\|?*'
+        for char in invalid_chars:
+            clean_title = clean_title.replace(char, '_')
+        filename = f"{clean_title}.mp3"
+        
+        # Return file response
+        return FileResponse(
+            path=audio_path,
+            filename=filename,
+            media_type='audio/mpeg',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to download audio: {str(e)}"
+        )
+
+
+@router.post("/audio", response_model=VideoDownloadResponse)
+async def download_single_audio(
+    request: AudioDownloadRequest,
+    background_tasks: BackgroundTasks
+):
+    """Download audio from a single YouTube video"""
+    downloader = YouTubeDownloader()
+    
+    try:
+        # Validate URL - convert HttpUrl to string
+        video_info = downloader.extract_video_info(str(request.url))
+        
+        # Start download task
+        task = download_audio_task.delay(
+            video_url=str(request.url)
+        )
+        
+        return VideoDownloadResponse(
+            task_id=task.id,
+            status="processing",
+            message="Audio download started"
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid YouTube URL or video not accessible: {str(e)}"
+        )
+
+
+@router.post("/audio/direct")
+async def download_audio_direct(
+    request: AudioDownloadRequest
+):
+    """Download audio from a single YouTube video directly (sync)"""
+    downloader = YouTubeDownloader()
+    
+    try:
+        # Get video info for title
+        video_info = downloader.extract_video_info(str(request.url))
+        
+        # Download audio
+        audio_path = downloader.download_audio(str(request.url))
+        
+        # Get filename - use video title
+        clean_title = video_info.get("title", "audio")
+        # Remove invalid characters for filename
+        invalid_chars = '<>:"/\\|?*'
+        for char in invalid_chars:
+            clean_title = clean_title.replace(char, '_')
+        filename = f"{clean_title}.mp3"
+        
+        # Return file response
+        return FileResponse(
+            path=audio_path,
+            filename=filename,
+            media_type='audio/mpeg',
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to download audio: {str(e)}"
+        )
+
+
+@router.post("/audios", response_model=VideoDownloadResponse)
+async def download_multiple_audios(
+    request: MultipleAudioDownloadRequest,
+    background_tasks: BackgroundTasks
+):
+    """Download audio from multiple YouTube videos as a zip file"""
+    
+    if not request.urls:
+        raise HTTPException(
+            status_code=400,
+            detail="No URLs provided"
+        )
+    
+    if len(request.urls) > 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum 10 videos can be downloaded at once"
+        )
+    
+    # Validate all URLs
+    downloader = YouTubeDownloader()
+    for url in request.urls:
+        try:
+            downloader.extract_video_info(str(url))
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid URL {url}: {str(e)}"
+            )
+    
+    # Start download task
+    task = download_multiple_audios_task.delay(
+        video_urls=[str(url) for url in request.urls]
+    )
+    
+    return VideoDownloadResponse(
+        task_id=task.id,
+        status="processing",
+        message=f"Starting audio download from {len(request.urls)} videos"
+    )

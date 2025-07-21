@@ -53,3 +53,12 @@ class VideoDownloadStatus(BaseModel):
     message: Optional[str] = None
     download_url: Optional[str] = None
     error: Optional[str] = None
+
+class ScriptVideoDownloadRequest(BaseModel):
+    quality: str = "best"  # Options: "best", "720p", "480p"
+
+class AudioDownloadRequest(BaseModel):
+    url: HttpUrl
+
+class MultipleAudioDownloadRequest(BaseModel):
+    urls: List[HttpUrl]
