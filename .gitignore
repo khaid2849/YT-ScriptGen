@@ -294,3 +294,6 @@ metrics/
 # Monitoring and health check files
 health_check.txt
 status.json
+
+# Ignore package-lock.json in frontend
+frontend/package-lock.json
