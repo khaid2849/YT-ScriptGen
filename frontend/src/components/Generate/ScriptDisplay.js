@@ -82,6 +82,33 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     }
   };
 
+  const cleanDuplicatedText = (text) => {
+    if (!text || typeof text !== 'string') return text;
+    
+    // Remove patterns like "text"text" or texttext where the same content is repeated
+    const trimmed = text.trim();
+    const halfLength = Math.floor(trimmed.length / 2);
+    
+    // Check if the first half equals the second half
+    if (halfLength > 0) {
+      const firstHalf = trimmed.substring(0, halfLength);
+      const secondHalf = trimmed.substring(halfLength);
+      
+      if (firstHalf === secondHalf) {
+        return firstHalf;
+      }
+    }
+    
+    // Handle quoted duplications like "text"text"
+    const quotedPattern = /^"([^"]+)"\1"?$/;
+    const quotedMatch = trimmed.match(quotedPattern);
+    if (quotedMatch) {
+      return `"${quotedMatch[1]}"`;
+    }
+    
+    return text;
+  };
+
   const handleCopyToClipboard = async () => {
     try {
       let textToCopy = "";
@@ -107,13 +134,33 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   };
 
   const generateJSONContent = () => {
+    // Clean the formatted_script data to avoid duplication
+    let cleanedFormattedScript = script.formatted_script || [];
+    
+    // If formatted_script is an array, ensure no duplicate timestamps and clean field values
+    if (Array.isArray(cleanedFormattedScript)) {
+      const seen = new Set();
+      cleanedFormattedScript = cleanedFormattedScript.filter(item => {
+        if (!item || !item.timestamp) return false;
+        const key = `${item.timestamp}-${item.script?.substring(0, 50)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).map(item => ({
+        ...item,
+        // Clean duplicated values within fields
+        timestamp: cleanDuplicatedText(item.timestamp),
+        script: cleanDuplicatedText(item.script)
+      }));
+    }
+    
     const jsonData = {
       video_info: {
         title: script.video_title || "Untitled",
         url: script.video_url,
         duration: script.video_duration || 0,
       },
-      formatted_script: script.formatted_script || [],
+      formatted_script: cleanedFormattedScript,
       transcript_text: script.transcript_text || "",
     };
     return JSON.stringify(jsonData, null, 2);
@@ -137,12 +184,12 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
   const formatTranscriptWithStyling = () => {
     if (!script.formatted_script) {
-      return <div className="text-gray-500 italic">No transcript available</div>;
+      return <div className="text-gray-500 dark:text-gray-400 italic">No transcript available</div>;
     }
 
     if (typeof script.formatted_script === "string") {
       return (
-        <div className="text-lg leading-relaxed text-gray-800 font-serif">
+        <div className="text-lg leading-relaxed text-gray-800 dark:text-gray-200 font-serif">
           {script.formatted_script}
         </div>
       );
@@ -150,12 +197,12 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
     if (Array.isArray(script.formatted_script)) {
       return script.formatted_script.map((item, index) => (
-        <div key={index} className="mb-4 p-3 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
+        <div key={index} className="mb-4 p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm border-l-4 border-blue-500">
           <div className="flex items-start space-x-3">
-            <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-md flex-shrink-0">
+            <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 rounded-md flex-shrink-0">
               {item.timestamp}
             </span>
-            <p className="text-base leading-relaxed text-gray-800 font-serif flex-1">
+            <p className="text-base leading-relaxed text-gray-800 dark:text-gray-200 font-serif flex-1">
               {item.script}
             </p>
           </div>
@@ -163,7 +210,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       ));
     }
 
-    return <div className="text-gray-500 italic">No transcript available</div>;
+    return <div className="text-gray-500 dark:text-gray-400 italic">No transcript available</div>;
   };
 
   const formatJSONWithSyntaxHighlighting = (jsonString) => {
@@ -274,16 +321,16 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Video Content Section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">Video Content</h2>
+        <div className="lg:col-span-2 space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Video Content</h2>
           
           {/* Video Preview */}
           {videoId && (
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="p-4 bg-gray-50 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {script.video_title || "YouTube Video"}
                 </h3>
               </div>
@@ -301,8 +348,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
           )}
 
           {/* Download Actions */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Download Options</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Download Options</h3>
             <div className="space-y-3">
               {/* Video Download with Quality Selection */}
               <div className="relative">
@@ -310,7 +357,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   <button
                     onClick={() => handleDownloadVideo()}
                     disabled={downloadingVideo}
-                    className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-l-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-l-md shadow-lg hover:shadow-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {downloadingVideo ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -321,7 +368,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   </button>
                   <button
                     onClick={() => setShowQualityMenu(!showQualityMenu)}
-                    className="px-3 py-3 bg-blue-600 text-white rounded-r-md shadow-sm hover:bg-blue-700 border-l border-blue-500"
+                    className="px-3 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-r-md shadow-lg hover:shadow-xl border-l border-blue-500 transition-all duration-200"
                   >
                     <ChevronDown className="w-4 h-4" />
                   </button>
@@ -329,7 +376,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 
                 {/* Quality Dropdown */}
                 {showQualityMenu && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-10">
                     {qualityOptions.map((option) => (
                       <button
                         key={option.value}
@@ -337,8 +384,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                           setSelectedQuality(option.value);
                           setShowQualityMenu(false);
                         }}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 ${
-                          selectedQuality === option.value ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-600 ${
+                          selectedQuality === option.value ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-200'
                         }`}
                       >
                         {option.label}
@@ -352,7 +399,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
               <button
                 onClick={handleDownloadAudio}
                 disabled={downloadingAudio}
-                className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-md shadow-lg hover:shadow-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {downloadingAudio ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -366,19 +413,19 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         </div>
 
         {/* Script Section */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">Script</h2>
+        <div className="lg:col-span-3 space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Script</h2>
           
-          <div className="bg-white rounded-lg shadow-lg">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
             {/* Tab Navigation */}
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-200 dark:border-gray-600">
               <div className="flex space-x-8 px-6 pt-4">
                 <button
                   onClick={() => setActiveTab("formatted")}
                   className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === "formatted"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   Text
@@ -387,8 +434,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   onClick={() => setActiveTab("plain")}
                   className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === "plain"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   Plain Text
@@ -397,8 +444,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   onClick={() => setActiveTab("json")}
                   className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === "json"
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
                   JSON
@@ -408,14 +455,14 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
             {/* Content Area */}
             <div className="p-6">
-              <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+              <div className="max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 {activeTab === "formatted" && (
                   <div className="space-y-3">
                     {formatTranscriptWithStyling()}
                   </div>
                 )}
                 {activeTab === "plain" && (
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 font-sans">
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans">
                     {script.transcript_text}
                   </div>
                 )}
@@ -441,7 +488,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   onClick={handleCopyToClipboard}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   Copy to Clipboard
@@ -450,7 +497,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 {activeTab === "formatted" && (
                   <button
                     onClick={() => handleDownload("txt")}
-                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download Text
@@ -460,7 +507,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 {activeTab === "plain" && (
                   <button
                     onClick={() => handleDownload("txt")}
-                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download Plain Text
@@ -470,7 +517,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 {activeTab === "json" && (
                   <button
                     onClick={() => handleDownload("json")}
-                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download JSON
@@ -486,7 +533,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       <div className="mt-8">
         <button
           onClick={onNewScript}
-          className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors"
+          className="w-full px-6 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
         >
           Generate New Script
         </button>
