@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { transcriptionAPI, scriptsAPI } from "../services/api";
 import ScriptDisplay from "../components/Generate/ScriptDisplay";
 import toast from "react-hot-toast";
+import { Clipboard } from "lucide-react";
 
 const GeneratePage = () => {
   const [url, setUrl] = useState("");
@@ -35,6 +36,16 @@ const GeneratePage = () => {
     ];
 
     return patterns.some((pattern) => pattern.test(url));
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setUrl(text);
+      toast.success("URL pasted from clipboard!");
+    } catch (error) {
+      toast.error("Failed to paste from clipboard. Please ensure clipboard permissions are granted.");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -151,15 +162,25 @@ const GeneratePage = () => {
                 >
                   YouTube URL
                 </label>
-                <input
-                  type="url"
-                  id="youtube-url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="url"
+                    id="youtube-url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePaste}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                    title="Paste from clipboard"
+                  >
+                    <Clipboard size={20} />
+                  </button>
+                </div>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                   Paste any public YouTube video URL to generate a transcript
                 </p>

@@ -135,6 +135,136 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     return "No transcript available";
   };
 
+  const formatTranscriptWithStyling = () => {
+    if (!script.formatted_script) {
+      return <div className="text-gray-500 italic">No transcript available</div>;
+    }
+
+    if (typeof script.formatted_script === "string") {
+      return (
+        <div className="text-lg leading-relaxed text-gray-800 font-serif">
+          {script.formatted_script}
+        </div>
+      );
+    }
+
+    if (Array.isArray(script.formatted_script)) {
+      return script.formatted_script.map((item, index) => (
+        <div key={index} className="mb-4 p-3 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
+          <div className="flex items-start space-x-3">
+            <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-md flex-shrink-0">
+              {item.timestamp}
+            </span>
+            <p className="text-base leading-relaxed text-gray-800 font-serif flex-1">
+              {item.script}
+            </p>
+          </div>
+        </div>
+      ));
+    }
+
+    return <div className="text-gray-500 italic">No transcript available</div>;
+  };
+
+  const formatJSONWithSyntaxHighlighting = (jsonString) => {
+    try {
+      const obj = JSON.parse(jsonString);
+      const formattedJson = JSON.stringify(obj, null, 2);
+      const lines = formattedJson.split('\n');
+      
+      return (
+        <div className="flex">
+          <div className="flex-shrink-0 w-12 text-right pr-3 text-gray-500 select-none">
+            {lines.map((_, index) => (
+              <div key={index} className="text-xs leading-5">
+                {index + 1}
+              </div>
+            ))}
+          </div>
+          <div className="flex-1 font-mono text-sm leading-5">
+            {renderJSONWithLineHighlighting(formattedJson)}
+          </div>
+        </div>
+      );
+    } catch (error) {
+      return (
+        <pre className="whitespace-pre-wrap text-sm text-red-400 font-mono">
+          {jsonString}
+        </pre>
+      );
+    }
+  };
+
+  const renderJSONWithLineHighlighting = (jsonString) => {
+    const lines = jsonString.split('\n');
+    
+    return (
+      <div>
+        {lines.map((line, index) => (
+          <div key={index} className="hover:bg-gray-800 px-2 -mx-2 rounded">
+            {highlightJSONLine(line)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const highlightJSONLine = (line) => {
+    const parts = [];
+    let currentIndex = 0;
+    
+    const patterns = [
+      { regex: /"([^"\\]|\\.)*"/g, className: 'text-green-300' }, // strings
+      { regex: /\b(true|false|null)\b/g, className: 'text-yellow-300' }, // booleans/null
+      { regex: /\b\d+\.?\d*\b/g, className: 'text-blue-300' }, // numbers
+      { regex: /[{}[\],]/g, className: 'text-gray-400' }, // brackets and commas
+      { regex: /:/g, className: 'text-gray-400' }, // colons
+    ];
+    
+    const matches = [];
+    
+    patterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.regex.exec(line)) !== null) {
+        matches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: match[0],
+          className: pattern.className
+        });
+      }
+    });
+    
+    matches.sort((a, b) => a.start - b.start);
+    
+    matches.forEach((match, index) => {
+      if (match.start > currentIndex) {
+        parts.push(
+          <span key={`text-${index}`} className="text-white">
+            {line.substring(currentIndex, match.start)}
+          </span>
+        );
+      }
+      parts.push(
+        <span key={`match-${index}`} className={match.className}>
+          {match.text}
+        </span>
+      );
+      currentIndex = match.end;
+    });
+    
+    if (currentIndex < line.length) {
+      parts.push(
+        <span key="text-end" className="text-white">
+          {line.substring(currentIndex)}
+        </span>
+      );
+    }
+    
+    return parts.length > 0 ? parts : <span className="text-white">{line}</span>;
+  };
+
+
   const qualityOptions = [
     { value: "best", label: "Best Quality" },
     { value: "720p", label: "720p HD" },
@@ -279,11 +409,32 @@ const ScriptDisplay = ({ script, onNewScript }) => {
             {/* Content Area */}
             <div className="p-6">
               <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-                  {activeTab === "formatted" && formatTranscript()}
-                  {activeTab === "plain" && script.transcript_text}
-                  {activeTab === "json" && generateJSONContent()}
-                </pre>
+                {activeTab === "formatted" && (
+                  <div className="space-y-3">
+                    {formatTranscriptWithStyling()}
+                  </div>
+                )}
+                {activeTab === "plain" && (
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 font-sans">
+                    {script.transcript_text}
+                  </div>
+                )}
+                {activeTab === "json" && (
+                  <div className="bg-gray-900 rounded-lg p-4 -m-4 border border-gray-700">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="ml-4 text-gray-400 text-sm font-mono">script-data.json</span>
+                      </div>
+                      <span className="text-gray-400 text-xs">JSON</span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      {formatJSONWithSyntaxHighlighting(generateJSONContent())}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Action Buttons */}
