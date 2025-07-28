@@ -213,31 +213,37 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     return <div className="text-gray-500 dark:text-gray-400 italic">No transcript available</div>;
   };
 
-  const formatJSONWithSyntaxHighlighting = (jsonString) => {
+  const formatJSONWithLineNumbers = (jsonString) => {
     try {
       const obj = JSON.parse(jsonString);
       const formattedJson = JSON.stringify(obj, null, 2);
       const lines = formattedJson.split('\n');
       
       return (
-        <div className="flex">
-          <div className="flex-shrink-0 w-12 text-right pr-3 text-gray-500 select-none">
+        <div className="flex font-mono text-sm">
+          <div className="flex-shrink-0 w-12 bg-gray-50 dark:bg-gray-800 text-right pr-3 py-2 border-r border-gray-200 dark:border-gray-700">
             {lines.map((_, index) => (
-              <div key={index} className="text-xs leading-5">
+              <div key={index} className="text-gray-500 dark:text-gray-400 leading-6 h-6">
                 {index + 1}
               </div>
             ))}
           </div>
-          <div className="flex-1 font-mono text-sm leading-5">
-            {renderJSONWithLineHighlighting(formattedJson)}
+          <div className="flex-1 py-2 px-3 overflow-x-auto">
+            {lines.map((line, index) => (
+              <div key={index} className="leading-6 h-6">
+                {highlightJSONLine(line)}
+              </div>
+            ))}
           </div>
         </div>
       );
     } catch (error) {
       return (
-        <pre className="whitespace-pre-wrap text-sm text-red-400 font-mono">
-          {jsonString}
-        </pre>
+        <div className="p-4">
+          <pre className="whitespace-pre-wrap text-sm text-red-500 font-mono">
+            {jsonString}
+          </pre>
+        </div>
       );
     }
   };
@@ -260,55 +266,109 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     const parts = [];
     let currentIndex = 0;
     
+    // Define patterns with jsonformatter.org-like colors
     const patterns = [
-      { regex: /"([^"\\]|\\.)*"/g, className: 'text-green-300' }, // strings
-      { regex: /\b(true|false|null)\b/g, className: 'text-yellow-300' }, // booleans/null
-      { regex: /\b\d+\.?\d*\b/g, className: 'text-blue-300' }, // numbers
-      { regex: /[{}[\],]/g, className: 'text-gray-400' }, // brackets and commas
-      { regex: /:/g, className: 'text-gray-400' }, // colons
+      { 
+        regex: /"([^"\\]|\\.)*"(?=\s*:)/g, 
+        className: 'text-blue-600 dark:text-blue-400' // JSON keys (blue)
+      },
+      { 
+        regex: /:\s*"([^"\\]|\\.)*"/g, 
+        className: 'text-green-600 dark:text-green-400', // String values (green)
+        isValue: true 
+      },
+      { 
+        regex: /\b(true|false)\b/g, 
+        className: 'text-purple-600 dark:text-purple-400' // Booleans (purple)
+      },
+      { 
+        regex: /\bnull\b/g, 
+        className: 'text-gray-500 dark:text-gray-400' // null (gray)
+      },
+      { 
+        regex: /\b\d+\.?\d*\b/g, 
+        className: 'text-red-600 dark:text-red-400' // Numbers (red)
+      },
+      { 
+        regex: /[{}[\],]/g, 
+        className: 'text-gray-700 dark:text-gray-300' // Brackets and commas
+      },
+      { 
+        regex: /:/g, 
+        className: 'text-gray-700 dark:text-gray-300' // Colons
+      },
     ];
     
     const matches = [];
     
     patterns.forEach(pattern => {
       let match;
-      while ((match = pattern.regex.exec(line)) !== null) {
+      const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
+      while ((match = regex.exec(line)) !== null) {
         matches.push({
           start: match.index,
           end: match.index + match[0].length,
           text: match[0],
-          className: pattern.className
+          className: pattern.className,
+          isValue: pattern.isValue
         });
       }
     });
     
+    // Sort matches by start position
     matches.sort((a, b) => a.start - b.start);
     
-    matches.forEach((match, index) => {
+    // Remove overlapping matches (prefer earlier ones)
+    const filteredMatches = [];
+    let lastEnd = 0;
+    matches.forEach(match => {
+      if (match.start >= lastEnd) {
+        filteredMatches.push(match);
+        lastEnd = match.end;
+      }
+    });
+    
+    filteredMatches.forEach((match, index) => {
       if (match.start > currentIndex) {
         parts.push(
-          <span key={`text-${index}`} className="text-white">
+          <span key={`text-${index}`} className="text-gray-800 dark:text-gray-200">
             {line.substring(currentIndex, match.start)}
           </span>
         );
       }
-      parts.push(
-        <span key={`match-${index}`} className={match.className}>
-          {match.text}
-        </span>
-      );
+      
+      // Handle string values differently (show : separately)
+      if (match.isValue) {
+        const colonIndex = match.text.indexOf(':');
+        parts.push(
+          <span key={`colon-${index}`} className="text-gray-700 dark:text-gray-300">
+            {match.text.substring(0, colonIndex + 1)}
+          </span>
+        );
+        parts.push(
+          <span key={`value-${index}`} className={match.className}>
+            {match.text.substring(colonIndex + 1)}
+          </span>
+        );
+      } else {
+        parts.push(
+          <span key={`match-${index}`} className={match.className}>
+            {match.text}
+          </span>
+        );
+      }
       currentIndex = match.end;
     });
     
     if (currentIndex < line.length) {
       parts.push(
-        <span key="text-end" className="text-white">
+        <span key="text-end" className="text-gray-800 dark:text-gray-200">
           {line.substring(currentIndex)}
         </span>
       );
     }
     
-    return parts.length > 0 ? parts : <span className="text-white">{line}</span>;
+    return parts.length > 0 ? parts : <span className="text-gray-800 dark:text-gray-200">{line}</span>;
   };
 
 
@@ -467,19 +527,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   </div>
                 )}
                 {activeTab === "json" && (
-                  <div className="bg-gray-900 rounded-lg p-4 -m-4 border border-gray-700">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="ml-4 text-gray-400 text-sm font-mono">script-data.json</span>
-                      </div>
-                      <span className="text-gray-400 text-xs">JSON</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                      {formatJSONWithSyntaxHighlighting(generateJSONContent())}
-                    </div>
+                  <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    {formatJSONWithLineNumbers(generateJSONContent())}
                   </div>
                 )}
               </div>
