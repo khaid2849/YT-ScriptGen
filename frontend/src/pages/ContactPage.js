@@ -105,8 +105,12 @@ const ContactPage = () => {
                     />
                   </svg>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Email</h3>
-                    <p className="text-gray-600 dark:text-gray-300">support@scriptgen.app</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Email
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      support@scriptgen.app
+                    </p>
                   </div>
                 </div>
 
@@ -128,7 +132,9 @@ const ContactPage = () => {
                     <h3 className="font-semibold text-gray-900 dark:text-white">
                       Response Time
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300">Within 24 hours</p>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Within 24 hours
+                    </p>
                   </div>
                 </div>
 
@@ -147,15 +153,21 @@ const ContactPage = () => {
                     />
                   </svg>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Support</h3>
-                    <p className="text-gray-600 dark:text-gray-300">Available Mon-Fri</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Support
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Available Mon-Fri
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Quick Tips */}
               <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
-                <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Quick Tips</h3>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                  Quick Tips
+                </h3>
                 <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                   <li>• Be specific about your issue</li>
                   <li>• Include video URLs if relevant</li>
@@ -309,7 +321,9 @@ const ContactPage = () => {
                 </button>
               </div>
 
-              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">* Required fields</p>
+              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                * Required fields
+              </p>
             </form>
           </div>
         </div>

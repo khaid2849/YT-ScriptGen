@@ -1,7 +1,14 @@
 import React, { useState, useRef } from "react";
 import { scriptsAPI, downloadAPI } from "../../services/api";
 import toast from "react-hot-toast";
-import { Copy, Video, Loader2, Download, Volume2, ChevronDown } from "lucide-react";
+import {
+  Copy,
+  Video,
+  Loader2,
+  Download,
+  Volume2,
+  ChevronDown,
+} from "lucide-react";
 
 const ScriptDisplay = ({ script, onNewScript }) => {
   const [activeTab, setActiveTab] = useState("formatted");
@@ -44,7 +51,10 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   const handleDownloadVideo = async (quality = selectedQuality) => {
     setDownloadingVideo(true);
     try {
-      const response = await downloadAPI.downloadScriptVideoWithQuality(script.id, quality);
+      const response = await downloadAPI.downloadScriptVideoWithQuality(
+        script.id,
+        quality
+      );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -83,29 +93,29 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   };
 
   const cleanDuplicatedText = (text) => {
-    if (!text || typeof text !== 'string') return text;
-    
+    if (!text || typeof text !== "string") return text;
+
     // Remove patterns like "text"text" or texttext where the same content is repeated
     const trimmed = text.trim();
     const halfLength = Math.floor(trimmed.length / 2);
-    
+
     // Check if the first half equals the second half
     if (halfLength > 0) {
       const firstHalf = trimmed.substring(0, halfLength);
       const secondHalf = trimmed.substring(halfLength);
-      
+
       if (firstHalf === secondHalf) {
         return firstHalf;
       }
     }
-    
+
     // Handle quoted duplications like "text"text"
     const quotedPattern = /^"([^"]+)"\1"?$/;
     const quotedMatch = trimmed.match(quotedPattern);
     if (quotedMatch) {
       return `"${quotedMatch[1]}"`;
     }
-    
+
     return text;
   };
 
@@ -136,24 +146,26 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   const generateJSONContent = () => {
     // Clean the formatted_script data to avoid duplication
     let cleanedFormattedScript = script.formatted_script || [];
-    
+
     // If formatted_script is an array, ensure no duplicate timestamps and clean field values
     if (Array.isArray(cleanedFormattedScript)) {
       const seen = new Set();
-      cleanedFormattedScript = cleanedFormattedScript.filter(item => {
-        if (!item || !item.timestamp) return false;
-        const key = `${item.timestamp}-${item.script?.substring(0, 50)}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      }).map(item => ({
-        ...item,
-        // Clean duplicated values within fields
-        timestamp: cleanDuplicatedText(item.timestamp),
-        script: cleanDuplicatedText(item.script)
-      }));
+      cleanedFormattedScript = cleanedFormattedScript
+        .filter((item) => {
+          if (!item || !item.timestamp) return false;
+          const key = `${item.timestamp}-${item.script?.substring(0, 50)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map((item) => ({
+          ...item,
+          // Clean duplicated values within fields
+          timestamp: cleanDuplicatedText(item.timestamp),
+          script: cleanDuplicatedText(item.script),
+        }));
     }
-    
+
     const jsonData = {
       video_info: {
         title: script.video_title || "Untitled",
@@ -184,7 +196,11 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
   const formatTranscriptWithStyling = () => {
     if (!script.formatted_script) {
-      return <div className="text-gray-500 dark:text-gray-400 italic">No transcript available</div>;
+      return (
+        <div className="text-gray-500 dark:text-gray-400 italic">
+          No transcript available
+        </div>
+      );
     }
 
     if (typeof script.formatted_script === "string") {
@@ -197,7 +213,10 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
     if (Array.isArray(script.formatted_script)) {
       return script.formatted_script.map((item, index) => (
-        <div key={index} className="mb-4 p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm border-l-4 border-blue-500">
+        <div
+          key={index}
+          className="mb-4 p-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm border-l-4 border-blue-500"
+        >
           <div className="flex items-start space-x-3">
             <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900 rounded-md flex-shrink-0">
               {item.timestamp}
@@ -210,20 +229,27 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       ));
     }
 
-    return <div className="text-gray-500 dark:text-gray-400 italic">No transcript available</div>;
+    return (
+      <div className="text-gray-500 dark:text-gray-400 italic">
+        No transcript available
+      </div>
+    );
   };
 
   const formatJSONWithLineNumbers = (jsonString) => {
     try {
       const obj = JSON.parse(jsonString);
       const formattedJson = JSON.stringify(obj, null, 2);
-      const lines = formattedJson.split('\n');
-      
+      const lines = formattedJson.split("\n");
+
       return (
         <div className="flex font-mono text-sm">
           <div className="flex-shrink-0 w-12 bg-gray-50 dark:bg-gray-800 text-right pr-3 py-2 border-r border-gray-200 dark:border-gray-700">
             {lines.map((_, index) => (
-              <div key={index} className="text-gray-500 dark:text-gray-400 leading-6 h-6">
+              <div
+                key={index}
+                className="text-gray-500 dark:text-gray-400 leading-6 h-6"
+              >
                 {index + 1}
               </div>
             ))}
@@ -249,8 +275,8 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   };
 
   const renderJSONWithLineHighlighting = (jsonString) => {
-    const lines = jsonString.split('\n');
-    
+    const lines = jsonString.split("\n");
+
     return (
       <div>
         {lines.map((line, index) => (
@@ -265,43 +291,43 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   const highlightJSONLine = (line) => {
     const parts = [];
     let currentIndex = 0;
-    
+
     // Define patterns with jsonformatter.org-like colors
     const patterns = [
-      { 
-        regex: /"([^"\\]|\\.)*"(?=\s*:)/g, 
-        className: 'text-blue-600 dark:text-blue-400' // JSON keys (blue)
+      {
+        regex: /"([^"\\]|\\.)*"(?=\s*:)/g,
+        className: "text-blue-600 dark:text-blue-400", // JSON keys (blue)
       },
-      { 
-        regex: /:\s*"([^"\\]|\\.)*"/g, 
-        className: 'text-green-600 dark:text-green-400', // String values (green)
-        isValue: true 
+      {
+        regex: /:\s*"([^"\\]|\\.)*"/g,
+        className: "text-green-600 dark:text-green-400", // String values (green)
+        isValue: true,
       },
-      { 
-        regex: /\b(true|false)\b/g, 
-        className: 'text-purple-600 dark:text-purple-400' // Booleans (purple)
+      {
+        regex: /\b(true|false)\b/g,
+        className: "text-purple-600 dark:text-purple-400", // Booleans (purple)
       },
-      { 
-        regex: /\bnull\b/g, 
-        className: 'text-gray-500 dark:text-gray-400' // null (gray)
+      {
+        regex: /\bnull\b/g,
+        className: "text-gray-500 dark:text-gray-400", // null (gray)
       },
-      { 
-        regex: /\b\d+\.?\d*\b/g, 
-        className: 'text-red-600 dark:text-red-400' // Numbers (red)
+      {
+        regex: /\b\d+\.?\d*\b/g,
+        className: "text-red-600 dark:text-red-400", // Numbers (red)
       },
-      { 
-        regex: /[{}[\],]/g, 
-        className: 'text-gray-700 dark:text-gray-300' // Brackets and commas
+      {
+        regex: /[{}[\],]/g,
+        className: "text-gray-700 dark:text-gray-300", // Brackets and commas
       },
-      { 
-        regex: /:/g, 
-        className: 'text-gray-700 dark:text-gray-300' // Colons
+      {
+        regex: /:/g,
+        className: "text-gray-700 dark:text-gray-300", // Colons
       },
     ];
-    
+
     const matches = [];
-    
-    patterns.forEach(pattern => {
+
+    patterns.forEach((pattern) => {
       let match;
       const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
       while ((match = regex.exec(line)) !== null) {
@@ -310,38 +336,44 @@ const ScriptDisplay = ({ script, onNewScript }) => {
           end: match.index + match[0].length,
           text: match[0],
           className: pattern.className,
-          isValue: pattern.isValue
+          isValue: pattern.isValue,
         });
       }
     });
-    
+
     // Sort matches by start position
     matches.sort((a, b) => a.start - b.start);
-    
+
     // Remove overlapping matches (prefer earlier ones)
     const filteredMatches = [];
     let lastEnd = 0;
-    matches.forEach(match => {
+    matches.forEach((match) => {
       if (match.start >= lastEnd) {
         filteredMatches.push(match);
         lastEnd = match.end;
       }
     });
-    
+
     filteredMatches.forEach((match, index) => {
       if (match.start > currentIndex) {
         parts.push(
-          <span key={`text-${index}`} className="text-gray-800 dark:text-gray-200">
+          <span
+            key={`text-${index}`}
+            className="text-gray-800 dark:text-gray-200"
+          >
             {line.substring(currentIndex, match.start)}
           </span>
         );
       }
-      
+
       // Handle string values differently (show : separately)
       if (match.isValue) {
-        const colonIndex = match.text.indexOf(':');
+        const colonIndex = match.text.indexOf(":");
         parts.push(
-          <span key={`colon-${index}`} className="text-gray-700 dark:text-gray-300">
+          <span
+            key={`colon-${index}`}
+            className="text-gray-700 dark:text-gray-300"
+          >
             {match.text.substring(0, colonIndex + 1)}
           </span>
         );
@@ -359,7 +391,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       }
       currentIndex = match.end;
     });
-    
+
     if (currentIndex < line.length) {
       parts.push(
         <span key="text-end" className="text-gray-800 dark:text-gray-200">
@@ -367,15 +399,18 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         </span>
       );
     }
-    
-    return parts.length > 0 ? parts : <span className="text-gray-800 dark:text-gray-200">{line}</span>;
-  };
 
+    return parts.length > 0 ? (
+      parts
+    ) : (
+      <span className="text-gray-800 dark:text-gray-200">{line}</span>
+    );
+  };
 
   const qualityOptions = [
     { value: "best", label: "Best Quality" },
     { value: "720p", label: "720p HD" },
-    { value: "480p", label: "480p SD" }
+    { value: "480p", label: "480p SD" },
   ];
 
   return (
@@ -384,8 +419,10 @@ const ScriptDisplay = ({ script, onNewScript }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Video Content Section */}
         <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Video Content</h2>
-          
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Video Content
+          </h2>
+
           {/* Video Preview */}
           {videoId && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
@@ -409,7 +446,9 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
           {/* Download Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Download Options</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Download Options
+            </h3>
             <div className="space-y-3">
               {/* Video Download with Quality Selection */}
               <div className="relative">
@@ -433,7 +472,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 {/* Quality Dropdown */}
                 {showQualityMenu && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-10">
@@ -445,7 +484,9 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                           setShowQualityMenu(false);
                         }}
                         className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-600 ${
-                          selectedQuality === option.value ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-200'
+                          selectedQuality === option.value
+                            ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                            : "text-gray-700 dark:text-gray-200"
                         }`}
                       >
                         {option.label}
@@ -474,8 +515,10 @@ const ScriptDisplay = ({ script, onNewScript }) => {
 
         {/* Script Section */}
         <div className="lg:col-span-3 space-y-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Script</h2>
-          
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Script
+          </h2>
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
             {/* Tab Navigation */}
             <div className="border-b border-gray-200 dark:border-gray-600">
@@ -527,12 +570,15 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   </div>
                 )}
                 {activeTab === "json" && (
-                  <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div
+                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    style={{ width: "max-content" }}
+                  >
                     {formatJSONWithLineNumbers(generateJSONContent())}
                   </div>
                 )}
               </div>
-              
+
               {/* Action Buttons */}
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
@@ -542,7 +588,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   <Copy className="w-4 h-4 mr-2" />
                   Copy to Clipboard
                 </button>
-                
+
                 {activeTab === "formatted" && (
                   <button
                     onClick={() => handleDownload("txt")}
@@ -552,7 +598,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     Download Text
                   </button>
                 )}
-                
+
                 {activeTab === "plain" && (
                   <button
                     onClick={() => handleDownload("txt")}
@@ -562,7 +608,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     Download Plain Text
                   </button>
                 )}
-                
+
                 {activeTab === "json" && (
                   <button
                     onClick={() => handleDownload("json")}
