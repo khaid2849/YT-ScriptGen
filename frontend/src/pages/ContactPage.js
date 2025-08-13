@@ -1,23 +1,25 @@
 import React, { useState } from "react";
 import { contactAPI } from "../services/api";
 import toast from "react-hot-toast";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const ContactPage = () => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subject: "General Inquiry",
+    subject: t("contact.generalInquiry"),
     message: "",
   });
   const [loading, setLoading] = useState(false);
 
   const subjectOptions = [
-    "General Inquiry",
-    "Technical Support",
-    "Bug Report",
-    "Feature Request",
-    "Feedback",
-    "Other",
+    t("contact.generalInquiry"),
+    t("contact.technicalSupport"),
+    t("contact.bugReport"),
+    t("contact.featureRequest"),
+    t("contact.feedback"),
+    t("contact.other"),
   ];
 
   const handleChange = (e) => {
@@ -32,12 +34,12 @@ const ContactPage = () => {
 
     // Validate form
     if (!formData.name || !formData.email || !formData.message) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("contact.pleaseFillInAllRequiredFields"));
       return;
     }
 
     if (formData.message.length < 10) {
-      toast.error("Message must be at least 10 characters long");
+      toast.error(t("contact.messageMustBeAtLeast10CharactersLong"));
       return;
     }
 
@@ -59,8 +61,7 @@ const ContactPage = () => {
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error(
-        error.response?.data?.detail ||
-          "Failed to send message. Please try again later."
+        error.response?.data?.detail || t("contact.failedToSendMessage")
       );
     } finally {
       setLoading(false);
@@ -73,11 +74,11 @@ const ContactPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Get in Touch
+            {t("contact.getInTouch")}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Have questions, feedback, or need help? We'd love to hear from you.
-            Send us a message and we'll respond within 24 hours.
+            {t("contact.haveQuestionsFeedbackOrNeedHelp")}
+            {t("contact.sendUsAMessageAndWeWillRespondWithin24Hours")}
           </p>
         </div>
 
@@ -86,7 +87,7 @@ const ContactPage = () => {
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                Contact Information
+                {t("contact.contactInformation")}
               </h2>
 
               <div className="space-y-6">
@@ -106,7 +107,7 @@ const ContactPage = () => {
                   </svg>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Email
+                      {t("contact.email")}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">
                       support@scriptgen.app
@@ -130,10 +131,10 @@ const ContactPage = () => {
                   </svg>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Response Time
+                      {t("contact.responseTime")}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Within 24 hours
+                      {t("contact.within24Hours")}
                     </p>
                   </div>
                 </div>
@@ -154,10 +155,10 @@ const ContactPage = () => {
                   </svg>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Support
+                      {t("contact.support")}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Available Mon-Fri
+                      {t("contact.availableMonFri")}
                     </p>
                   </div>
                 </div>
@@ -166,12 +167,12 @@ const ContactPage = () => {
               {/* Quick Tips */}
               <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
                 <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                  Quick Tips
+                  {t("contact.quickTips")}
                 </h3>
                 <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                  <li>• Be specific about your issue</li>
-                  <li>• Include video URLs if relevant</li>
-                  <li>• Check our FAQ section first</li>
+                  <li>• {t("contact.beSpecificAboutYourIssue")}</li>
+                  <li>• {t("contact.includeVideoURLsIfRelevant")}</li>
+                  <li>• {t("contact.checkOurFAQSectionFirst")}</li>
                 </ul>
               </div>
             </div>
@@ -184,7 +185,7 @@ const ContactPage = () => {
               className="bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8"
             >
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                Send us a Message
+                {t("contact.sendUsAMessage")}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,7 +194,7 @@ const ContactPage = () => {
                     htmlFor="name"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
                   >
-                    Your Name *
+                    {t("contact.yourName")} *
                   </label>
                   <input
                     type="text"
@@ -212,7 +213,7 @@ const ContactPage = () => {
                     htmlFor="email"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
                   >
-                    Your Email *
+                    {t("contact.yourEmail")} *
                   </label>
                   <input
                     type="email"
@@ -232,7 +233,7 @@ const ContactPage = () => {
                   htmlFor="subject"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
                 >
-                  Subject *
+                  {t("contact.subject")} *
                 </label>
                 <select
                   id="subject"
@@ -254,7 +255,7 @@ const ContactPage = () => {
                   htmlFor="message"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
                 >
-                  Message *
+                  {t("contact.message")} *
                 </label>
                 <textarea
                   id="message"
@@ -264,10 +265,10 @@ const ContactPage = () => {
                   required
                   rows="6"
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="Tell us how we can help you..."
+                  placeholder={t("contact.tellUsHowWeCanHelpYou")}
                 />
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {formData.message.length}/5000 characters
+                  {formData.message.length}/{t("contact.maxCharacters")}
                 </p>
               </div>
 
@@ -298,11 +299,11 @@ const ContactPage = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Sending...
+                      {t("contact.sending")}
                     </>
                   ) : (
                     <>
-                      Send Message
+                      {t("contact.sendMessage")}
                       <svg
                         className="ml-2 w-5 h-5"
                         fill="none"
@@ -322,7 +323,7 @@ const ContactPage = () => {
               </div>
 
               <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                * Required fields
+                {t("contact.requiredFields")} *
               </p>
             </form>
           </div>
@@ -331,47 +332,43 @@ const ContactPage = () => {
         {/* FAQ Section */}
         <div className="mt-16 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Frequently Asked Questions
+            {t("contact.frequentlyAskedQuestions")}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                How accurate is the transcription?
+                {t("contact.howAccurateIsTheTranscription")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Our AI achieves 95%+ accuracy for clear audio. Results may vary
-                based on audio quality and accents.
+                {t("contact.ourAIAchieves95AccuracyForClearAudio")}
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                What video formats are supported?
+                {t("contact.whatVideoFormatsAreSupported")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                We support all public YouTube videos. Private or age-restricted
-                videos cannot be processed.
+                {t("contact.weSupportAllPublicYouTubeVideos")}
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Is there a video length limit?
+                {t("contact.isThereAVideoLengthLimit")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Currently, we support videos up to 1 hour in length for optimal
-                processing speed.
+                {t("contact.currentlyWeSupportVideosUpTo1HourInLength")}
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                Can I edit the transcript after generation?
+                {t("contact.canIEditTheTranscriptAfterGeneration")}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Yes! Download the transcript and edit it in any text editor.
-                JSON format is also available for developers.
+                {t("contact.yesDownloadTheTranscriptAndEditItInAnyTextEditor")}
               </p>
             </div>
           </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
 import HomePage from "./pages/HomePage";
@@ -12,7 +13,8 @@ import ContactPage from "./pages/ContactPage";
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <LanguageProvider>
+        <Router>
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
           <Navbar />
           <main className="flex-grow">
@@ -26,7 +28,8 @@ function App() {
           <Footer />
           <Toaster position="top-right" />
         </div>
-      </Router>
+        </Router>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

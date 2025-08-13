@@ -27,11 +27,19 @@ def process_youtube_video(self, script_id: int, video_url: str):
 
     # Store task progress in Redis
     def update_task_status(progress, status, extra_data=None):
+        # Handle both string and object status formats for translation support
+        if isinstance(status, dict):
+            # New format: {"message_key": "...", "message_fallback": "..."}
+            status_data = status
+        else:
+            # Legacy format: string
+            status_data = {"message": status}
+        
         task_data = {
             "task_id": self.request.id,
             "script_id": script_id,
             "progress": progress,
-            "status": status,
+            "status": status_data,
             "state": "PROGRESS" if progress < 100 else "SUCCESS",
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -45,17 +53,21 @@ def process_youtube_video(self, script_id: int, video_url: str):
             ex=3600,  # Expire in 1 hour
         )
 
-        # Also update Celery state
+        # Also update Celery state (use fallback message for celery meta)
+        celery_status = status_data.get("message_fallback", status_data.get("message", "Processing..."))
         self.update_state(
             state="PROGRESS" if progress < 100 else "SUCCESS",
-            meta={"current": progress, "total": 100, "status": status},
+            meta={"current": progress, "total": 100, "status": celery_status},
         )
 
     try:
         print(f"Starting to process video: {video_url}")
 
         # Update task state - Extracting info
-        update_task_status(10, "Extracting video information...")
+        update_task_status(10, {
+            "message_key": "celery.download.fetching_info",
+            "message_fallback": "Extracting video information..."
+        })
 
         # Get script record
         script = db.query(Script).filter(Script.id == script_id).first()
@@ -67,7 +79,10 @@ def process_youtube_video(self, script_id: int, video_url: str):
         db.commit()
 
         # Extract video info
-        update_task_status(20, "Downloading audio from video...")
+        update_task_status(20, {
+            "message_key": "celery.transcription.extracting_audio",
+            "message_fallback": "Downloading audio from video..."
+        })
         video_info = downloader.extract_video_info(video_url)
 
         # Update script with video info
@@ -85,11 +100,17 @@ def process_youtube_video(self, script_id: int, video_url: str):
         print(f"Audio downloaded to: {audio_path}")
 
         # Transcribe audio
-        update_task_status(50, "Transcribing audio using AI...")
+        update_task_status(50, {
+            "message_key": "celery.transcription.generating_transcript",
+            "message_fallback": "Transcribing audio using AI..."
+        })
         transcript_data = transcriber.transcribe_audio(audio_path)
 
         # Format transcript
-        update_task_status(80, "Formatting transcript...")
+        update_task_status(80, {
+            "message_key": "celery.transcription.finalizing",
+            "message_fallback": "Formatting transcript..."
+        })
         formatted_script = transcriber.format_transcript_as_list(
             transcript_data["segments"]
         )
@@ -102,7 +123,10 @@ def process_youtube_video(self, script_id: int, video_url: str):
         db.commit()
 
         # Final update
-        update_task_status(100, "Transcription completed!", {"state": "SUCCESS"})
+        update_task_status(100, {
+            "message_key": "celery.transcription.completed",
+            "message_fallback": "Transcription completed!"
+        }, {"state": "SUCCESS"})
 
         print(f"Successfully processed script {script_id}")
         return {
@@ -123,7 +147,10 @@ def process_youtube_video(self, script_id: int, video_url: str):
 
         # Update task status
         update_task_status(
-            0, f"Processing failed: {str(e)}", {"state": "FAILURE", "error": str(e)}
+            0, {
+                "message_key": "celery.transcription.failed",
+                "message_fallback": f"Processing failed: {str(e)}"
+            }, {"state": "FAILURE", "error": str(e)}
         )
 
         raise
@@ -155,10 +182,18 @@ def download_video_task(self, video_url: str, quality: str = "best"):
     redis_client = get_redis_client()
     
     def update_task_status(progress, status, extra_data=None):
+        # Handle both string and object status formats for translation support
+        if isinstance(status, dict):
+            # New format: {"message_key": "...", "message_fallback": "..."}
+            status_data = status
+        else:
+            # Legacy format: string
+            status_data = {"message": status}
+        
         task_data = {
             "task_id": self.request.id,
             "progress": progress,
-            "status": status,
+            "status": status_data,
             "state": "PROGRESS" if progress < 100 else "SUCCESS",
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -171,20 +206,28 @@ def download_video_task(self, video_url: str, quality: str = "best"):
             ex=3600  # Expire in 1 hour
         )
         
+        # Also update Celery state (use fallback message for celery meta)
+        celery_status = status_data.get("message_fallback", status_data.get("message", "Processing..."))
         self.update_state(
             state="PROGRESS" if progress < 100 else "SUCCESS",
-            meta={"current": progress, "total": 100, "status": status}
+            meta={"current": progress, "total": 100, "status": celery_status}
         )
     
     try:
         # Update status
-        update_task_status(10, "Extracting video information...")
+        update_task_status(10, {
+            "message_key": "celery.download.fetching_info",
+            "message_fallback": "Extracting video information..."
+        })
         
         # Extract video info
         video_info = downloader.extract_video_info(video_url)
         
         # Update status
-        update_task_status(30, f"Downloading: {video_info['title']}...")
+        update_task_status(30, {
+            "message_key": "celery.download.downloading",
+            "message_fallback": f"Downloading: {video_info['title']}..."
+        })
         
         # Download video
         video_path = downloader.download_video(video_url, quality)
@@ -192,7 +235,10 @@ def download_video_task(self, video_url: str, quality: str = "best"):
         # Update final status
         update_task_status(
             100,
-            "Download completed!",
+            {
+                "message_key": "celery.download.completed",
+                "message_fallback": "Download completed!"
+            },
             {
                 "state": "SUCCESS",
                 "file_path": video_path,
@@ -233,10 +279,18 @@ def download_multiple_videos_task(self, video_urls: List[str], quality: str = "b
     redis_client = get_redis_client()
     
     def update_task_status(progress, status, extra_data=None):
+        # Handle both string and object status formats for translation support
+        if isinstance(status, dict):
+            # New format: {"message_key": "...", "message_fallback": "..."}
+            status_data = status
+        else:
+            # Legacy format: string
+            status_data = {"message": status}
+        
         task_data = {
             "task_id": self.request.id,
             "progress": progress,
-            "status": status,
+            "status": status_data,
             "state": "PROGRESS" if progress < 100 else "SUCCESS",
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -249,16 +303,21 @@ def download_multiple_videos_task(self, video_urls: List[str], quality: str = "b
             ex=3600
         )
         
+        # Also update Celery state (use fallback message for celery meta)
+        celery_status = status_data.get("message_fallback", status_data.get("message", "Processing..."))
         self.update_state(
             state="PROGRESS" if progress < 100 else "SUCCESS",
-            meta={"current": progress, "total": 100, "status": status}
+            meta={"current": progress, "total": 100, "status": celery_status}
         )
     
     try:
         total_videos = len(video_urls)
         
         # Update initial status
-        update_task_status(5, f"Starting download of {total_videos} videos...")
+        update_task_status(5, {
+            "message_key": "celery.download.starting",
+            "message_fallback": f"Starting download of {total_videos} videos..."
+        })
         
         # Calculate progress increments
         progress_per_video = 90 / total_videos
@@ -270,7 +329,10 @@ def download_multiple_videos_task(self, video_urls: List[str], quality: str = "b
         # Update final status
         update_task_status(
             100,
-            f"Successfully created zip file with videos",
+            {
+                "message_key": "celery.download.completed",
+                "message_fallback": f"Successfully created zip file with videos"
+            },
             {
                 "state": "SUCCESS",
                 "file_path": zip_path,
@@ -311,10 +373,18 @@ def download_audio_task(self, video_url: str):
     redis_client = get_redis_client()
     
     def update_task_status(progress, status, extra_data=None):
+        # Handle both string and object status formats for translation support
+        if isinstance(status, dict):
+            # New format: {"message_key": "...", "message_fallback": "..."}
+            status_data = status
+        else:
+            # Legacy format: string
+            status_data = {"message": status}
+        
         task_data = {
             "task_id": self.request.id,
             "progress": progress,
-            "status": status,
+            "status": status_data,
             "state": "PROGRESS" if progress < 100 else "SUCCESS",
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -327,20 +397,28 @@ def download_audio_task(self, video_url: str):
             ex=3600
         )
         
+        # Also update Celery state (use fallback message for celery meta)
+        celery_status = status_data.get("message_fallback", status_data.get("message", "Processing..."))
         self.update_state(
             state="PROGRESS" if progress < 100 else "SUCCESS",
-            meta={"current": progress, "total": 100, "status": status}
+            meta={"current": progress, "total": 100, "status": celery_status}
         )
     
     try:
         # Update initial status
-        update_task_status(10, "Extracting video info...")
+        update_task_status(10, {
+            "message_key": "celery.download.fetching_info",
+            "message_fallback": "Extracting video info..."
+        })
         
         # Get video info
         video_info = downloader.extract_video_info(video_url)
         
         # Update status
-        update_task_status(30, "Starting audio extraction...")
+        update_task_status(30, {
+            "message_key": "celery.download.extracting_audio",
+            "message_fallback": "Starting audio extraction..."
+        })
         
         # Download audio
         audio_path = downloader.download_audio(video_url)
@@ -348,7 +426,10 @@ def download_audio_task(self, video_url: str):
         # Update final status
         update_task_status(
             100,
-            "Audio extraction completed",
+            {
+                "message_key": "celery.download.completed",
+                "message_fallback": "Audio extraction completed"
+            },
             {
                 "state": "SUCCESS",
                 "file_path": audio_path,
@@ -389,10 +470,18 @@ def download_multiple_audios_task(self, video_urls: List[str]):
     redis_client = get_redis_client()
     
     def update_task_status(progress, status, extra_data=None):
+        # Handle both string and object status formats for translation support
+        if isinstance(status, dict):
+            # New format: {"message_key": "...", "message_fallback": "..."}
+            status_data = status
+        else:
+            # Legacy format: string
+            status_data = {"message": status}
+        
         task_data = {
             "task_id": self.request.id,
             "progress": progress,
-            "status": status,
+            "status": status_data,
             "state": "PROGRESS" if progress < 100 else "SUCCESS",
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -405,16 +494,21 @@ def download_multiple_audios_task(self, video_urls: List[str]):
             ex=3600
         )
         
+        # Also update Celery state (use fallback message for celery meta)
+        celery_status = status_data.get("message_fallback", status_data.get("message", "Processing..."))
         self.update_state(
             state="PROGRESS" if progress < 100 else "SUCCESS",
-            meta={"current": progress, "total": 100, "status": status}
+            meta={"current": progress, "total": 100, "status": celery_status}
         )
     
     try:
         total_videos = len(video_urls)
         
         # Update initial status
-        update_task_status(5, f"Starting audio extraction from {total_videos} videos...")
+        update_task_status(5, {
+            "message_key": "celery.download.starting",
+            "message_fallback": f"Starting audio extraction from {total_videos} videos..."
+        })
         
         # Download audio files and create zip
         zip_path = downloader.download_multiple_audios(video_urls)
@@ -422,7 +516,10 @@ def download_multiple_audios_task(self, video_urls: List[str]):
         # Update final status
         update_task_status(
             100,
-            f"Successfully created zip file with audio files",
+            {
+                "message_key": "celery.download.completed",
+                "message_fallback": f"Successfully created zip file with audio files"
+            },
             {
                 "state": "SUCCESS",
                 "file_path": zip_path,

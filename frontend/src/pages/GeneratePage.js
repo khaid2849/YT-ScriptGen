@@ -3,8 +3,11 @@ import { transcriptionAPI, scriptsAPI } from "../services/api";
 import ScriptDisplay from "../components/Generate/ScriptDisplay";
 import toast from "react-hot-toast";
 import { Clipboard } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { handleBackendMessage, formatProgressMessage } from "../utils/messageHandler";
 
 const GeneratePage = () => {
+  const { t } = useLanguage();
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState("idle"); // idle, processing, completed, failed
   const [taskId, setTaskId] = useState(null);
@@ -42,9 +45,9 @@ const GeneratePage = () => {
     try {
       const text = await navigator.clipboard.readText();
       setUrl(text);
-      toast.success("URL pasted from clipboard!");
+      toast.success(t("generate.urlPastedFromClipboard"));
     } catch (error) {
-      toast.error("Failed to paste from clipboard. Please ensure clipboard permissions are granted.");
+      toast.error(t("generate.failedPaste"));
     }
   };
 
@@ -52,32 +55,35 @@ const GeneratePage = () => {
     e.preventDefault();
 
     if (!url.trim()) {
-      toast.error("Please enter a YouTube URL");
+      toast.error(t("generate.pleaseEnterUrl"));
       return;
     }
 
     if (!validateYouTubeUrl(url)) {
-      toast.error("Please enter a valid YouTube URL");
+      toast.error(t("generate.pleaseEnterUrl"));
       return;
     }
 
     try {
       setStatus("processing");
       setProgress(0);
-      setStatusMessage("Starting transcription...");
+      setStatusMessage(t("celery.transcription.starting"));
 
       const response = await transcriptionAPI.create({ video_url: url });
 
       setTaskId(response.data.task_id);
-      setProgress(response.data.progress);
-      setStatusMessage(response.data.message);
+      setProgress(response.data.progress || 0);
+      
+      // Handle initial message with translation
+      const initialMessage = handleBackendMessage(response.data.message, t);
+      setStatusMessage(initialMessage);
 
-      toast.success("Video processing started!");
+      toast.success(t("generate.videoProcessingStarted"));
     } catch (error) {
       console.error("Error starting transcription:", error);
       setStatus("failed");
       toast.error(
-        error.response?.data?.detail || "Failed to start transcription"
+        error.response?.data?.detail || t("generate.failedToStartTranscription")
       );
     }
   };
@@ -89,22 +95,28 @@ const GeneratePage = () => {
       const data = response.data;
       console.log("Status response:", data);
 
-      setProgress(data.progress);
-      setStatusMessage(data.message);
+      // Handle message with translation
+      const translatedMessage = handleBackendMessage(data.message || data, t);
+      setStatusMessage(translatedMessage);
+      
+      // Update progress
+      setProgress(data.progress || 0);
 
       if (data.status === "completed" && data.script_id) {
         console.log("Task completed with script_id:", data.script_id);
         setStatus("completed");
         setScriptId(data.script_id);
         await fetchScript(data.script_id);
-        toast.success("Transcription completed!");
+        toast.success(t("generate.transcriptionCompleted"));
       } else if (data.status === "failed") {
         console.log("Task failed:", data);
         setStatus("failed");
-        toast.error(data.message || "Transcription failed");
+        const errorMessage = handleBackendMessage(data.message || data.error, t);
+        toast.error(errorMessage || t("generate.transcriptionFailed"));
       }
     } catch (error) {
       console.error("Failed to check status:", error);
+      setStatusMessage(t("celery.error"));
     }
   };
 
@@ -116,7 +128,7 @@ const GeneratePage = () => {
       setScriptData(response.data);
     } catch (error) {
       console.error("Error fetching script:", error);
-      toast.error("Failed to fetch script");
+      toast.error(t("generate.failedToFetchScript"));
     }
   };
 
@@ -139,12 +151,12 @@ const GeneratePage = () => {
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {status === "completed"
                 ? "Your Script is Ready!"
-                : "Generate Your Script"}
+                : t("generate.title")}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               {status === "completed"
-                ? "Your video has been successfully transcribed. Download or copy your script below."
-                : "Transform any YouTube video into a professionally formatted transcript with timestamps."}
+                ? t("generate.videoTranscriptionCompleted")
+                : t("generate.description")}
             </p>
           </div>
         </div>
@@ -182,7 +194,7 @@ const GeneratePage = () => {
                   </button>
                 </div>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Paste any public YouTube video URL to generate a transcript
+                  {t("generate.pastePublicUrl")}
                 </p>
               </div>
 
@@ -191,7 +203,7 @@ const GeneratePage = () => {
                   type="submit"
                   className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 shadow-lg hover:shadow-xl"
                 >
-                  Generate Script
+                  {t("generate.generateScript")}
                 </button>
               </div>
             </form>
@@ -226,7 +238,9 @@ const GeneratePage = () => {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   Processing Your Video
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300">{statusMessage}</p>
+                <p className="text-gray-600 dark:text-gray-300">
+                  {statusMessage}
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -234,7 +248,7 @@ const GeneratePage = () => {
                   <div className="flex mb-2 items-center justify-between">
                     <div>
                       <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 dark:text-blue-400 bg-blue-200 dark:bg-blue-900">
-                        Progress
+                        {t("generate.progress")}
                       </span>
                     </div>
                     <div className="text-right">
@@ -252,7 +266,7 @@ const GeneratePage = () => {
                 </div>
 
                 <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                  This may take a few minutes depending on the video length...
+                  {t("generate.processingTime")}
                 </div>
               </div>
             </div>
@@ -270,7 +284,8 @@ const GeneratePage = () => {
                     Script data not available
                   </h3>
                   <p className="text-yellow-700 dark:text-yellow-300 mb-4">
-                    The transcription completed but script data could not be loaded.
+                    The transcription completed but script data could not be
+                    loaded.
                   </p>
                   <button
                     onClick={handleReset}

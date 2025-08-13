@@ -2,25 +2,28 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, FileText, Download, SendHorizontal } from "lucide-react";
 import ThemeToggle from "../UI/ThemeToggle";
+import LanguageToggle from "../UI/LanguageToggle";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { t } = useLanguage();
 
   const navigation = [
-    { name: "Home", href: "/", icon: null },
+    { name: t("nav.home"), href: "/", icon: null },
     {
-      name: "Generate",
+      name: t("nav.generate"),
       href: "/generate",
       icon: <FileText className="w-4 h-4" />,
     },
     {
-      name: "Download",
+      name: t("nav.download"),
       href: "/download",
       icon: <Download className="w-4 h-4" />,
     },
     {
-      name: "Contact",
+      name: t("nav.contact"),
       href: "/contact",
       icon: <SendHorizontal className="w-4 h-4" />,
     },
@@ -58,12 +61,15 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            {/* Language Toggle */}
+            <LanguageToggle className="ml-4" />
             {/* Theme Toggle */}
-            <ThemeToggle className="ml-4" />
+            <ThemeToggle className="ml-2" />
           </div>
 
           {/* Mobile menu button */}
           <div className="-mr-2 flex items-center md:hidden space-x-2">
+            <LanguageToggle />
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}
