@@ -74,7 +74,9 @@ const GeneratePage = () => {
 
       toast.success("Video processing started!");
     } catch (error) {
-      console.error("Error starting transcription:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error starting transcription:", error);
+      }
       setStatus("failed");
       toast.error(
         error.response?.data?.detail || "Failed to start transcription"
@@ -84,38 +86,42 @@ const GeneratePage = () => {
 
   const checkTaskStatus = async (taskId) => {
     try {
-      console.log("Checking status for task:", taskId);
+      // Removed console.log for production
       const response = await transcriptionAPI.getStatus(taskId);
       const data = response.data;
-      console.log("Status response:", data);
+      // Removed console.log for production
 
       setProgress(data.progress);
       setStatusMessage(data.message);
 
       if (data.status === "completed" && data.script_id) {
-        console.log("Task completed with script_id:", data.script_id);
+        // Task completed successfully
         setStatus("completed");
         setScriptId(data.script_id);
         await fetchScript(data.script_id);
         toast.success("Transcription completed!");
       } else if (data.status === "failed") {
-        console.log("Task failed:", data);
+        // Task failed
         setStatus("failed");
         toast.error(data.message || "Transcription failed");
       }
     } catch (error) {
-      console.error("Failed to check status:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to check status:", error);
+      }
     }
   };
 
   const fetchScript = async (id) => {
     try {
-      console.log("Fetching script with ID:", id);
+      // Fetching script data
       const response = await scriptsAPI.getById(id);
-      console.log("Script response:", response.data);
+      // Script fetched successfully
       setScriptData(response.data);
     } catch (error) {
-      console.error("Error fetching script:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching script:", error);
+      }
       toast.error("Failed to fetch script");
     }
   };

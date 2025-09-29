@@ -57,7 +57,9 @@ const ContactPage = () => {
         });
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error sending message:", error);
+      }
       toast.error(
         error.response?.data?.detail ||
           "Failed to send message. Please try again later."
