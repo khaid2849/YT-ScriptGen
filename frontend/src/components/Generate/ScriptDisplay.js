@@ -171,6 +171,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         title: script.video_title || "Untitled",
         url: script.video_url,
         duration: script.video_duration || 0,
+        detected_language: script.detected_language || "unknown",
       },
       formatted_script: cleanedFormattedScript,
       transcript_text: script.transcript_text || "",
@@ -430,6 +431,13 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {script.video_title || "YouTube Video"}
                 </h3>
+                {script.detected_language && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      🌐 {script.detected_language.toUpperCase()}
+                    </span>
+                  </p>
+                )}
               </div>
               <div className="relative aspect-video">
                 <iframe

@@ -97,6 +97,7 @@ def process_youtube_video(self, script_id: int, video_url: str):
         # Update script with results
         script.transcript_text = transcript_data["text"]
         script.formatted_script = formatted_script  # Now storing as JSON list
+        script.detected_language = transcript_data.get("language", "unknown")  # Store detected language
         script.status = "completed"
         script.completed_at = datetime.utcnow()
         db.commit()

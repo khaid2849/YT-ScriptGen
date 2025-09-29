@@ -2,21 +2,22 @@ import whisper
 import os
 from typing import Dict, List
 from ..config import settings
+from .logger import logger, log_task_start, log_task_complete, log_task_error
 
 
 class WhisperTranscriber:
     def __init__(self, model_name: str = None):
         self.model_name = model_name or settings.WHISPER_MODEL
-        print(f"Loading Whisper model: {self.model_name}")
+        logger.info(f"Loading Whisper model: {self.model_name}")
         self.model = whisper.load_model(self.model_name)
-        print(f"Whisper model loaded successfully")
+        logger.info(f"Whisper model loaded successfully")
 
     def transcribe_audio(self, audio_path: str) -> Dict:
         """Transcribe audio file using Whisper"""
         if not os.path.exists(audio_path):
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-        print(f"Starting transcription of: {audio_path}")
+        logger.info(f"Starting transcription of: {audio_path}")
 
         try:
             # Transcribe the audio file directly with the path
@@ -34,7 +35,7 @@ class WhisperTranscriber:
                 word_timestamps=False,
             )
 
-            print(
+            logger.info(
                 f"Transcription completed. Detected language: {result.get('language', 'unknown')}"
             )
 
@@ -45,10 +46,10 @@ class WhisperTranscriber:
             }
 
         except Exception as e:
-            print(f"Error during transcription: {str(e)}")
+            logger.error(f"Error during transcription: {str(e)}")
             # Try with different parameters as fallback
             try:
-                print("Attempting transcription with basic parameters...")
+                logger.info("Attempting transcription with basic parameters...")
                 result = self.model.transcribe(audio_path)
                 return {
                     "text": result["text"],
@@ -56,7 +57,7 @@ class WhisperTranscriber:
                     "language": result.get("language", "unknown"),
                 }
             except Exception as fallback_error:
-                print(f"Fallback transcription also failed: {str(fallback_error)}")
+                logger.error(f"Fallback transcription also failed: {str(fallback_error)}")
                 raise Exception(f"Transcription failed: {str(e)}")
 
     def format_transcript(
