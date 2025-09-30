@@ -180,22 +180,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
     return JSON.stringify(jsonData, null, 2);
   };
 
-  const formatTranscript = () => {
-    if (!script.formatted_script) return "No transcript available";
-
-    if (typeof script.formatted_script === "string") {
-      return script.formatted_script;
-    }
-
-    if (Array.isArray(script.formatted_script)) {
-      return script.formatted_script
-        .map((item) => `${item.timestamp}: ${item.script}`)
-        .join("\n\n");
-    }
-
-    return "No transcript available";
-  };
-
   const formatTranscriptWithStyling = () => {
     if (!script.formatted_script) {
       return (
@@ -274,20 +258,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         </div>
       );
     }
-  };
-
-  const renderJSONWithLineHighlighting = (jsonString) => {
-    const lines = jsonString.split("\n");
-
-    return (
-      <div>
-        {lines.map((line, index) => (
-          <div key={index} className="hover:bg-gray-800 px-2 -mx-2 rounded">
-            {highlightJSONLine(line)}
-          </div>
-        ))}
-      </div>
-    );
   };
 
   const highlightJSONLine = (line) => {

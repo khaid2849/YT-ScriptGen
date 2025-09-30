@@ -293,7 +293,7 @@ export const translations = {
         video_not_found: "Video not found or unavailable",
         audio_extraction_failed: "Failed to extract audio from video",
         transcription_api_error: "Transcription service error",
-        invalid_video_format: "Invalid or unsupported video format"
+        invalid_video_format: "Invalid or unsupported video format",
       },
 
       // Download specific messages
@@ -311,7 +311,7 @@ export const translations = {
         quality_not_available: "Requested quality not available",
         disk_space_error: "Insufficient disk space",
         network_error: "Network connection error",
-        conversion_failed: "File conversion failed"
+        conversion_failed: "File conversion failed",
       },
 
       // Progress stages
@@ -319,12 +319,12 @@ export const translations = {
         initializing: "Initializing task...",
         preparing: "Preparing...",
         stage_1: "Processing stage 1 of 4...",
-        stage_2: "Processing stage 2 of 4...", 
+        stage_2: "Processing stage 2 of 4...",
         stage_3: "Processing stage 3 of 4...",
         stage_4: "Processing stage 4 of 4...",
         cleanup: "Cleaning up temporary files...",
-        finishing: "Finishing up..."
-      }
+        finishing: "Finishing up...",
+      },
     },
   },
 
@@ -627,7 +627,7 @@ export const translations = {
         video_not_found: "Video no encontrado o no disponible",
         audio_extraction_failed: "Falló la extracción de audio del video",
         transcription_api_error: "Error del servicio de transcripción",
-        invalid_video_format: "Formato de video inválido o no soportado"
+        invalid_video_format: "Formato de video inválido o no soportado",
       },
 
       // Download specific messages
@@ -645,7 +645,7 @@ export const translations = {
         quality_not_available: "Calidad solicitada no disponible",
         disk_space_error: "Espacio insuficiente en disco",
         network_error: "Error de conexión de red",
-        conversion_failed: "Falló la conversión de archivo"
+        conversion_failed: "Falló la conversión de archivo",
       },
 
       // Progress stages
@@ -653,12 +653,12 @@ export const translations = {
         initializing: "Inicializando tarea...",
         preparing: "Preparando...",
         stage_1: "Procesando etapa 1 de 4...",
-        stage_2: "Procesando etapa 2 de 4...", 
+        stage_2: "Procesando etapa 2 de 4...",
         stage_3: "Procesando etapa 3 de 4...",
         stage_4: "Procesando etapa 4 de 4...",
         cleanup: "Limpiando archivos temporales...",
-        finishing: "Finalizando..."
-      }
+        finishing: "Finalizando...",
+      },
     },
   },
 
@@ -960,7 +960,7 @@ export const translations = {
         video_not_found: "Vidéo introuvable ou indisponible",
         audio_extraction_failed: "Échec de l'extraction audio de la vidéo",
         transcription_api_error: "Erreur du service de transcription",
-        invalid_video_format: "Format vidéo invalide ou non supporté"
+        invalid_video_format: "Format vidéo invalide ou non supporté",
       },
 
       // Download specific messages
@@ -978,7 +978,7 @@ export const translations = {
         quality_not_available: "Qualité demandée non disponible",
         disk_space_error: "Espace disque insuffisant",
         network_error: "Erreur de connexion réseau",
-        conversion_failed: "Échec de la conversion de fichier"
+        conversion_failed: "Échec de la conversion de fichier",
       },
 
       // Progress stages
@@ -986,18 +986,18 @@ export const translations = {
         initializing: "Initialisation de la tâche...",
         preparing: "Préparation...",
         stage_1: "Traitement étape 1 sur 4...",
-        stage_2: "Traitement étape 2 sur 4...", 
+        stage_2: "Traitement étape 2 sur 4...",
         stage_3: "Traitement étape 3 sur 4...",
         stage_4: "Traitement étape 4 sur 4...",
         cleanup: "Nettoyage des fichiers temporaires...",
-        finishing: "Finalisation..."
-      }
+        finishing: "Finalisation...",
+      },
     },
   },
 };
 
 export const languages = {
-  en: { name: "English", flag: "🇺🇸" },
-  es: { name: "Español", flag: "🇪🇸" },
-  fr: { name: "Français", flag: "🇫🇷" },
+  en: { name: "English", flag: "US" },
+  es: { name: "Español", flag: "ES" },
+  fr: { name: "Français", flag: "FR" },
 };

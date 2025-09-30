@@ -1,9 +1,17 @@
 import React, { useState } from "react";
 import { downloadAPI } from "../services/api";
 import toast from "react-hot-toast";
-import { Download, Loader2, Plus, X, Video, Volume2, Clipboard } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  Plus,
+  X,
+  Video,
+  Volume2,
+  Clipboard,
+} from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { handleBackendMessage, formatProgressMessage } from "../utils/messageHandler";
+import { handleBackendMessage } from "../utils/messageHandler";
 
 const DownloadPage = () => {
   const { t } = useLanguage();
@@ -139,7 +147,7 @@ const DownloadPage = () => {
 
         // Handle message with translation
         const translatedMessage = handleBackendMessage(
-          data.message || data.error || data, 
+          data.message || data.error || data,
           t
         );
 
@@ -158,12 +166,13 @@ const DownloadPage = () => {
           window.location.href = downloadUrl;
 
           // Use translated success messages
-          const successKey = mode === "single" 
-            ? (downloadType === "video" 
-              ? "celery.download.completed" 
-              : "celery.download.completed")
-            : "celery.download.completed";
-          
+          const successKey =
+            mode === "single"
+              ? downloadType === "video"
+                ? "celery.download.completed"
+                : "celery.download.completed"
+              : "celery.download.completed";
+
           toast.success(t(successKey));
 
           // Reset form
@@ -176,7 +185,10 @@ const DownloadPage = () => {
         } else if (data.status === "error" || data.status === "failed") {
           clearInterval(pollInterval);
           setIsDownloading(false);
-          const errorMessage = handleBackendMessage(data.error || data.message, t);
+          const errorMessage = handleBackendMessage(
+            data.error || data.message,
+            t
+          );
           toast.error(errorMessage || t("download.downloadFailed"));
           setDownloadProgress({});
         }

@@ -9,9 +9,15 @@
       name="description"
       content="YouTube Script Generator - Convert YouTube videos to timestamped scripts for free. Download video transcripts with timestamps."
     />
-    <meta name="keywords" content="youtube, transcript, script, generator, timestamps, video, download, free" />
+    <meta
+      name="keywords"
+      content="youtube, transcript, script, generator, timestamps, video, download, free"
+    />
     <meta name="author" content="YouTube Script Generator" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:;" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https: http://localhost:*; font-src 'self' data:; frame-src 'self' https://www.youtube.com https://youtube.com;"
+    />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/media/favicon.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -29,13 +35,15 @@
     -->
     <title>ScriptGen: It's free</title>
     <script>
-      (function() {
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-        
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        const systemPrefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const theme = savedTheme || (systemPrefersDark ? "dark" : "light");
+
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
         }
       })();
     </script>

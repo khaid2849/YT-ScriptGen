@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Globe } from 'lucide-react';
+import ReactCountryFlag from 'react-country-flag';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const LanguageToggle = ({ className = '' }) => {
@@ -35,7 +36,14 @@ const LanguageToggle = ({ className = '' }) => {
         title="Change language"
       >
         <Globe className="w-4 h-4" />
-        <span className="text-lg">{currentLanguage.flag}</span>
+        <ReactCountryFlag
+          countryCode={currentLanguage.flag}
+          svg
+          style={{
+            width: '1.25em',
+            height: '1.25em',
+          }}
+        />
         <span className="hidden sm:inline">{currentLanguage.name}</span>
         <svg
           className={`w-4 h-4 transition-transform duration-200 ${
@@ -67,7 +75,14 @@ const LanguageToggle = ({ className = '' }) => {
                     : 'text-gray-700 dark:text-gray-200'
                 }`}
               >
-                <span className="text-lg">{lang.flag}</span>
+                <ReactCountryFlag
+                  countryCode={lang.flag}
+                  svg
+                  style={{
+                    width: '1.25em',
+                    height: '1.25em',
+                  }}
+                />
                 <span>{lang.name}</span>
                 {language === code && (
                   <svg

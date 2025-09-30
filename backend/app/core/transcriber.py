@@ -23,7 +23,6 @@ class WhisperTranscriber:
             # Transcribe the audio file directly with the path
             result = self.model.transcribe(
                 audio_path,
-                language=None,  # Auto-detect language
                 task="transcribe",
                 verbose=True,
                 temperature=0.0,
@@ -33,10 +32,6 @@ class WhisperTranscriber:
                 condition_on_previous_text=True,
                 initial_prompt=None,
                 word_timestamps=False,
-            )
-
-            logger.info(
-                f"Transcription completed. Detected language: {result.get('language', 'unknown')}"
             )
 
             return {

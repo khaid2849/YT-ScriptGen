@@ -4,7 +4,7 @@ import ScriptDisplay from "../components/Generate/ScriptDisplay";
 import toast from "react-hot-toast";
 import { Clipboard } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { handleBackendMessage, formatProgressMessage } from "../utils/messageHandler";
+import { handleBackendMessage } from "../utils/messageHandler";
 
 const GeneratePage = () => {
   const { t } = useLanguage();
@@ -73,7 +73,7 @@ const GeneratePage = () => {
 
       setTaskId(response.data.task_id);
       setProgress(response.data.progress || 0);
-      
+
       // Handle initial message with translation
       const initialMessage = handleBackendMessage(response.data.message, t);
       setStatusMessage(initialMessage);
@@ -98,7 +98,7 @@ const GeneratePage = () => {
       // Handle message with translation
       const translatedMessage = handleBackendMessage(data.message || data, t);
       setStatusMessage(translatedMessage);
-      
+
       // Update progress
       setProgress(data.progress || 0);
 
@@ -111,7 +111,10 @@ const GeneratePage = () => {
       } else if (data.status === "failed") {
         console.log("Task failed:", data);
         setStatus("failed");
-        const errorMessage = handleBackendMessage(data.message || data.error, t);
+        const errorMessage = handleBackendMessage(
+          data.message || data.error,
+          t
+        );
         toast.error(errorMessage || t("generate.transcriptionFailed"));
       }
     } catch (error) {

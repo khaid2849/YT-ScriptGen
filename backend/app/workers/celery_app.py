@@ -22,4 +22,8 @@ celery_app.conf.update(
     timezone='UTC',
     enable_utc=True,
     imports=['app.workers.tasks'],  # Important!
+    # Windows-specific configuration to avoid permission issues
+    worker_pool='solo',
+    worker_concurrency=1,
+    worker_prefetch_multiplier=1,
 )
