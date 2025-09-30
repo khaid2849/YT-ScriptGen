@@ -1,23 +1,24 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
+  const { t } = useLanguage();
   const features = [
-    "AI-Powered Transcription",
-    "Timestamp Generation", 
-    "JSON & TXT Export",
-    "Video Download (MP4)",
-    "Audio Download (MP3)",
-    "Quality Selection",
+    t("footer.aiPoweredTranscription"),
+    t("footer.timestampGeneration"),
+    t("footer.jsonTxtExport"),
+    t("footer.videoDownloadMp4"),
+    t("footer.audioDownloadMp3"),
+    t("footer.qualitySelection"),
   ];
 
   const quickLinks = [
-    { name: "Home", path: "/" },
-    { name: "Generate Script", path: "/generate" },
-    { name: "Download", path: "/download" },
-    { name: "Contact", path: "/contact" },
+    { name: t("footer.home"), path: "/" },
+    { name: t("footer.generateScript"), path: "/generate" },
+    { name: t("footer.download"), path: "/download" },
+    { name: t("footer.contact"), path: "/contact" },
   ];
 
   const socialLinks = [
@@ -61,9 +62,7 @@ const Footer = () => {
               <h3 className="text-2xl font-bold text-white">ScriptGen</h3>
             </div>
             <p className="text-sm mb-6 max-w-md text-gray-400 dark:text-gray-300">
-              Free AI-powered YouTube tool for transcription and downloads. Convert videos into 
-              professionally formatted scripts with timestamps, plus download videos and audio 
-              in multiple formats.
+              {t("footer.freeAIPoweredYouTubeToolForTranscriptionAndDownloads")}
             </p>
 
             {/* Features List */}
@@ -89,7 +88,9 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+            <h4 className="text-white font-semibold mb-4">
+              {t("footer.quickLinks")}
+            </h4>
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
@@ -106,13 +107,18 @@ const Footer = () => {
 
           {/* About */}
           <div>
-            <h4 className="text-white font-semibold mb-4">About</h4>
+            <h4 className="text-white font-semibold mb-4">
+              {t("footer.about")}
+            </h4>
             <p className="text-sm text-gray-400 dark:text-gray-300 mb-4">
-              ScriptGen is a free tool built to help content creators, students,
-              and researchers easily transcribe YouTube videos and download content.
+              {t(
+                "footer.scriptGenIsAFreeToolBuiltToHelpContentCreatorsStudentsAndResearchersEasilyTranscribeYouTubeVideosAndDownloadContent"
+              )}
             </p>
             <p className="text-sm text-gray-400 dark:text-gray-300">
-              Generate scripts, download videos/audio in multiple formats. No sign-up required. No hidden fees.
+              {t(
+                "footer.generateScriptsDownloadVideosAudioInMultipleFormatsNoSignUpRequiredNoHiddenFees"
+              )}
             </p>
           </div>
         </div>
@@ -122,7 +128,8 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <p className="text-sm text-gray-400 dark:text-gray-300">
-                © {currentYear} ScriptGen by Khaid. All rights reserved.
+                © {currentYear} {t("footer.scriptGenByKhaid")}{" "}
+                {t("footer.allRightsReserved")}
               </p>
             </div>
 

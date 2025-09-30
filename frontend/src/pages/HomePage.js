@@ -1,72 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const HomePage = () => {
-  const features = [
-    {
-      icon: '🎯',
-      title: 'Accurate Transcription',
-      description: 'AI-powered speech recognition for precise video-to-text conversion'
-    },
-    {
-      icon: '⏱️',
-      title: 'Timestamp Generation',
-      description: 'Automatic timestamps for easy navigation and reference'
-    },
-    {
-      icon: '📄',
-      title: 'Multiple Formats',
-      description: 'Export your transcripts as TXT or JSON files'
-    },
-    {
-      icon: '🎥',
-      title: 'Video Download',
-      description: 'Download YouTube videos in multiple quality options (Best, 720p, 480p)'
-    },
-    {
-      icon: '🎵',
-      title: 'Audio Download',
-      description: 'Extract and download high-quality MP3 audio from any YouTube video'
-    },
-    {
-      icon: '📦',
-      title: 'Batch Downloads',
-      description: 'Download multiple videos or audio files as convenient ZIP archives'
-    },
-    {
-      icon: '⚡',
-      title: 'Fast Processing',
-      description: 'Quick turnaround time for all video lengths and downloads'
-    },
-    {
-      icon: '🌐',
-      title: 'YouTube Support',
-      description: 'Works with any public YouTube video URL'
-    },
-    {
-      icon: '💰',
-      title: '100% Free',
-      description: 'No hidden costs, no subscriptions, completely free to use'
-    }
-  ];
+  const { t } = useLanguage();
+  
+  const featureIcons = ['🎯', '⏱️', '📄', '🎥', '🎵', '📦', '⚡', '🌐', '💰'];
+  const features = t('home.features').map((feature, index) => ({
+    icon: featureIcons[index],
+    ...feature
+  }));
 
-  const steps = [
-    {
-      number: '1',
-      title: 'Paste YouTube URL',
-      description: 'Copy and paste any YouTube video URL into our tool'
-    },
-    {
-      number: '2',
-      title: 'Choose Your Option',
-      description: 'Generate transcripts, download videos, or extract audio files'
-    },
-    {
-      number: '3',
-      title: 'Get Your Content',
-      description: 'Download scripts, videos (MP4), or audio files (MP3) instantly'
-    }
-  ];
+  const steps = t('home.steps').map((step, index) => ({
+    number: (index + 1).toString(),
+    ...step
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -74,17 +22,16 @@ const HomePage = () => {
       <section className="pt-20 pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            YouTube Script Generator
+            {t('home.title')}
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Convert any YouTube video into perfectly formatted transcripts with timestamps, 
-            plus download videos and audio in multiple formats. Free, fast, and powered by advanced AI.
+            {t('home.subtitle')}
           </p>
           <Link
             to="/generate"
             className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200 shadow-lg hover:shadow-xl"
           >
-            Start Generating Scripts
+            {t('home.getStarted')}
             <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -96,7 +43,7 @@ const HomePage = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
-            Why Choose Our Script Generator?
+            {t('home.featuresTitle')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
@@ -114,7 +61,7 @@ const HomePage = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">
-            How It Works
+            {t('home.howItWorksTitle')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {steps.map((step, index) => (
@@ -134,16 +81,16 @@ const HomePage = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900 dark:bg-gray-950">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to Generate Your First Script?
+            {t('home.ctaTitle')}
           </h2>
           <p className="text-xl text-gray-300 mb-8">
-            Join thousands of content creators, students, and researchers who use our tool daily.
+            {t('home.ctaSubtitle')}
           </p>
           <Link
             to="/generate"
             className="inline-flex items-center px-8 py-4 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition duration-200 shadow-lg"
           >
-            Generate Script Now - It's Free!
+            {t('home.ctaButton')}
           </Link>
         </div>
       </section>

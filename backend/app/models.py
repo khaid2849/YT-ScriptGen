@@ -12,7 +12,6 @@ class Script(Base):
     status = Column(String, default="pending")
     transcript_text = Column(Text)
     formatted_script = Column(JSON)  # Stores list of timestamp-text pairs
-    detected_language = Column(String)  # Store detected language from Whisper
     error_message = Column(Text)
     file_path = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

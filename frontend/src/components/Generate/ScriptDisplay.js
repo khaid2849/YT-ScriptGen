@@ -9,8 +9,10 @@ import {
   Volume2,
   ChevronDown,
 } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const ScriptDisplay = ({ script, onNewScript }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("formatted");
   const [downloadingVideo, setDownloadingVideo] = useState(false);
   const [downloadingAudio, setDownloadingAudio] = useState(false);
@@ -171,7 +173,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         title: script.video_title || "Untitled",
         url: script.video_url,
         duration: script.video_duration || 0,
-        detected_language: script.detected_language || "unknown",
       },
       formatted_script: cleanedFormattedScript,
       transcript_text: script.transcript_text || "",
@@ -409,9 +410,9 @@ const ScriptDisplay = ({ script, onNewScript }) => {
   };
 
   const qualityOptions = [
-    { value: "best", label: "Best Quality" },
-    { value: "720p", label: "720p HD" },
-    { value: "480p", label: "480p SD" },
+    { value: "best", label: t("generate.bestQuality") },
+    { value: "720p", label: t("generate.hd720p") },
+    { value: "480p", label: t("generate.sd480p") },
   ];
 
   return (
@@ -421,7 +422,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         {/* Video Content Section */}
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Video Content
+            {t("generate.videoContent")}
           </h2>
 
           {/* Video Preview */}
@@ -431,13 +432,6 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {script.video_title || "YouTube Video"}
                 </h3>
-                {script.detected_language && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      🌐 {script.detected_language.toUpperCase()}
-                    </span>
-                  </p>
-                )}
               </div>
               <div className="relative aspect-video">
                 <iframe
@@ -455,7 +449,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
           {/* Download Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Download Options
+              {t("generate.downloadOptions")}
             </h3>
             <div className="space-y-3">
               {/* Video Download with Quality Selection */}
@@ -471,7 +465,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     ) : (
                       <Video className="w-4 h-4 mr-2" />
                     )}
-                    Download Video ({selectedQuality})
+                    {t("generate.downloadVideo")} ({selectedQuality})
                   </button>
                   <button
                     onClick={() => setShowQualityMenu(!showQualityMenu)}
@@ -515,7 +509,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                 ) : (
                   <Volume2 className="w-4 h-4 mr-2" />
                 )}
-                Download Audio (MP3)
+                {t("generate.downloadAudio")} (MP3)
               </button>
             </div>
           </div>
@@ -524,7 +518,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
         {/* Script Section */}
         <div className="lg:col-span-3 space-y-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Script
+            {t("generate.script")}
           </h2>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
@@ -539,7 +533,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
-                  Text
+                  {t("generate.text")}
                 </button>
                 <button
                   onClick={() => setActiveTab("plain")}
@@ -549,7 +543,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
-                  Plain Text
+                  {t("generate.plainText")}
                 </button>
                 <button
                   onClick={() => setActiveTab("json")}
@@ -559,7 +553,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
-                  JSON
+                  {t("generate.json")}
                 </button>
               </div>
             </div>
@@ -594,7 +588,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                   className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Copy className="w-4 h-4 mr-2" />
-                  Copy to Clipboard
+                  {t("generate.copyToClipboard")}
                 </button>
 
                 {activeTab === "formatted" && (
@@ -603,7 +597,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Text
+                    {t("generate.downloadText")}
                   </button>
                 )}
 
@@ -613,7 +607,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Plain Text
+                    {t("generate.downloadPlainText")}
                   </button>
                 )}
 
@@ -623,7 +617,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
                     className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download JSON
+                    {t("generate.downloadJson")}
                   </button>
                 )}
               </div>

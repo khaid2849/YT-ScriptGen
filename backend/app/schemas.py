@@ -12,7 +12,6 @@ class ScriptBase(BaseModel):
     video_title: Optional[str]
     video_duration: Optional[int]
     status: str
-    detected_language: Optional[str]
     created_at: datetime
     completed_at: Optional[datetime]
 
