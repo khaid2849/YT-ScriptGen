@@ -126,6 +126,15 @@ export const translations = {
       bestQuality: "Best Quality",
       hd720p: "720p HD",
       sd480p: "480p SD",
+      tryAgain: "Try Again",
+      scriptDataNotAvailable: "Script data not available",
+      scriptDataNotAvailableMessage:
+        "The transcription completed but script data could not be loaded.",
+      processingFailed: "Processing Failed",
+      processingFailedMessage:
+        "Something went wrong while processing your video.",
+      yourScriptIsReady: "Your Script is Ready!",
+      generateNewScript: "Generate New Script",
     },
 
     // Download Page
@@ -457,6 +466,8 @@ export const translations = {
       bestQuality: "Mejor Calidad",
       hd720p: "720p HD",
       sd480p: "480p SD",
+      yourScriptIsReady: "Tu guión está listo!",
+      generateNewScript: "Generar Nuevo Guión",
     },
 
     // Download Page
@@ -791,6 +802,14 @@ export const translations = {
       bestQuality: "Meilleure Qualité",
       hd720p: "720p HD",
       sd480p: "480p SD",
+      tryAgain: "Intentar de Nuevo",
+      scriptDataNotAvailable: "No se encontró el guión",
+      scriptDataNotAvailableMessage:
+        "La transcripción se completó pero no se pudo cargar el guión.",
+      processingFailed: "Error al procesar el video",
+      processingFailedMessage: "Algo salió mal mientras se procesaba tu video.",
+      yourScriptIsReady: "Tu guión está listo!",
+      generateNewScript: "Generar Nuevo Guión",
     },
 
     // Download Page

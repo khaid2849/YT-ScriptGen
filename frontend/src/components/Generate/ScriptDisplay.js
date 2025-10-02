@@ -602,7 +602,7 @@ const ScriptDisplay = ({ script, onNewScript }) => {
           onClick={onNewScript}
           className="w-full px-6 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
         >
-          Generate New Script
+          {t("generate.generateNewScript")}
         </button>
       </div>
     </div>
