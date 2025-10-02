@@ -80,7 +80,6 @@ const GeneratePage = () => {
 
       toast.success(t("generate.videoProcessingStarted"));
     } catch (error) {
-      console.error("Error starting transcription:", error);
       setStatus("failed");
       toast.error(
         error.response?.data?.detail || t("generate.failedToStartTranscription")
@@ -90,10 +89,8 @@ const GeneratePage = () => {
 
   const checkTaskStatus = async (taskId) => {
     try {
-      console.log("Checking status for task:", taskId);
       const response = await transcriptionAPI.getStatus(taskId);
       const data = response.data;
-      console.log("Status response:", data);
 
       // Handle message with translation
       const translatedMessage = handleBackendMessage(data.message || data, t);
@@ -103,13 +100,11 @@ const GeneratePage = () => {
       setProgress(data.progress || 0);
 
       if (data.status === "completed" && data.script_id) {
-        console.log("Task completed with script_id:", data.script_id);
         setStatus("completed");
         setScriptId(data.script_id);
         await fetchScript(data.script_id);
         toast.success(t("generate.transcriptionCompleted"));
       } else if (data.status === "failed") {
-        console.log("Task failed:", data);
         setStatus("failed");
         const errorMessage = handleBackendMessage(
           data.message || data.error,
@@ -118,19 +113,15 @@ const GeneratePage = () => {
         toast.error(errorMessage || t("generate.transcriptionFailed"));
       }
     } catch (error) {
-      console.error("Failed to check status:", error);
       setStatusMessage(t("celery.error"));
     }
   };
 
   const fetchScript = async (id) => {
     try {
-      console.log("Fetching script with ID:", id);
       const response = await scriptsAPI.getById(id);
-      console.log("Script response:", response.data);
       setScriptData(response.data);
     } catch (error) {
-      console.error("Error fetching script:", error);
       toast.error(t("generate.failedToFetchScript"));
     }
   };
@@ -153,7 +144,7 @@ const GeneratePage = () => {
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {status === "completed"
-                ? "Your Script is Ready!"
+                ? t("generate.yourScriptIsReady")
                 : t("generate.title")}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -239,7 +230,7 @@ const GeneratePage = () => {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Processing Your Video
+                  {t("generate.processing")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300">
                   {statusMessage}
@@ -284,17 +275,16 @@ const GeneratePage = () => {
               <div className="max-w-3xl mx-auto">
                 <div className="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
                   <h3 className="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-                    Script data not available
+                    {t("generate.scriptDataNotAvailable")}
                   </h3>
                   <p className="text-yellow-700 dark:text-yellow-300 mb-4">
-                    The transcription completed but script data could not be
-                    loaded.
+                    {t("generate.scriptDataNotAvailableMessage")}
                   </p>
                   <button
                     onClick={handleReset}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    Try Again
+                    {t("generate.tryAgain")}
                   </button>
                 </div>
               </div>
@@ -321,17 +311,16 @@ const GeneratePage = () => {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Processing Failed
+                {t("generate.processingFailed")}
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                {statusMessage ||
-                  "Something went wrong while processing your video."}
+                {statusMessage || t("generate.processingFailedMessage")}
               </p>
               <button
                 onClick={handleReset}
                 className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
               >
-                Try Again
+                {t("generate.tryAgain")}
               </button>
             </div>
           </div>
