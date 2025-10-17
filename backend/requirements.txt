@@ -13,3 +13,25 @@ pydub
 ffmpeg-python
 python-dotenv
 email-validator
+
+# AI/ML - Whisper for transcription (CRITICAL - was missing)
+openai-whisper==20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+faker==20.1.0
+
+# Monitoring & Error Tracking
+sentry-sdk==1.38.0
+prometheus-client==0.19.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Security & Validation
+python-magic==0.4.27
