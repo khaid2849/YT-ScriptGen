@@ -1,25 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { transcriptionAPI, scriptsAPI } from "../services/api";
 import ScriptDisplay from "../components/Generate/ScriptDisplay";
 import toast from "react-hot-toast";
 import { Clipboard } from "lucide-react";
+import { usePageState } from "../contexts/PageStateContext";
 
 const GeneratePage = () => {
-  const [url, setUrl] = useState("");
-  const [status, setStatus] = useState("idle"); // idle, processing, completed, failed
-  const [taskId, setTaskId] = useState(null);
-  const [scriptId, setScriptId] = useState(null);
-  const [scriptData, setScriptData] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [statusMessage, setStatusMessage] = useState("");
+  const {
+    generateUrl: url, setGenerateUrl: setUrl,
+    generateStatus: status, setGenerateStatus: setStatus,
+    generateTaskId: taskId, setGenerateTaskId: setTaskId,
+    generateScriptId: scriptId, setGenerateScriptId: setScriptId,
+    generateScriptData: scriptData, setGenerateScriptData: setScriptData,
+    generateProgress: progress, setGenerateProgress: setProgress,
+    generateStatusMessage: statusMessage, setGenerateStatusMessage: setStatusMessage,
+    resetGenerate: handleReset,
+  } = usePageState();
 
+  // Resume polling when navigating back to this page while still processing
   useEffect(() => {
     let interval;
 
     if (taskId && status === "processing") {
       interval = setInterval(() => {
         checkTaskStatus(taskId);
-      }, 2000); // Poll every 2 seconds
+      }, 2000);
     }
 
     return () => {
@@ -118,16 +123,6 @@ const GeneratePage = () => {
       console.error("Error fetching script:", error);
       toast.error("Failed to fetch script");
     }
-  };
-
-  const handleReset = () => {
-    setStatus("idle");
-    setTaskId(null);
-    setScriptId(null);
-    setScriptData(null);
-    setProgress(0);
-    setStatusMessage("");
-    setUrl("");
   };
 
   return (

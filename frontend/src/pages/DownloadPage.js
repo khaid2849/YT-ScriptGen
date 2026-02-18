@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React from "react";
 import { downloadAPI } from "../services/api";
 import toast from "react-hot-toast";
 import { Download, Loader2, Plus, X, Video, Volume2 } from "lucide-react";
+import { usePageState } from "../contexts/PageStateContext";
 
 const DownloadPage = () => {
-  const [singleUrl, setSingleUrl] = useState("");
-  const [multipleUrls, setMultipleUrls] = useState([""]);
-  const [quality, setQuality] = useState("best");
-  const [downloadType, setDownloadType] = useState("video"); // 'video' or 'audio'
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadMode, setDownloadMode] = useState("single"); // 'single' or 'multiple'
-  const [downloadProgress, setDownloadProgress] = useState({});
+  const {
+    downloadSingleUrl: singleUrl, setDownloadSingleUrl: setSingleUrl,
+    downloadMultipleUrls: multipleUrls, setDownloadMultipleUrls: setMultipleUrls,
+    downloadQuality: quality, setDownloadQuality: setQuality,
+    downloadType, setDownloadType,
+    isDownloading, setIsDownloading,
+    downloadMode, setDownloadMode,
+    downloadProgress, setDownloadProgress,
+  } = usePageState();
 
   const addUrlField = () => {
     setMultipleUrls([...multipleUrls, ""]);
@@ -57,7 +60,6 @@ const DownloadPage = () => {
       }
 
       if (response.data.task_id) {
-        // Start polling for status
         pollDownloadStatus(response.data.task_id, "single");
       }
     } catch (error) {
@@ -99,7 +101,6 @@ const DownloadPage = () => {
       }
 
       if (response.data.task_id) {
-        // Start polling for status
         pollDownloadStatus(response.data.task_id, "multiple");
       }
     } catch (error) {
@@ -124,7 +125,6 @@ const DownloadPage = () => {
           clearInterval(pollInterval);
           setIsDownloading(false);
 
-          // Trigger download
           const downloadUrl = `${process.env.REACT_APP_API_URL}/download/file/${taskId}`;
           window.location.href = downloadUrl;
 
@@ -134,7 +134,7 @@ const DownloadPage = () => {
               : `${downloadType === "video" ? "Videos" : "Audio files"} downloaded successfully!`
           );
 
-          // Reset form
+          // Reset URL fields after successful download
           if (mode === "single") {
             setSingleUrl("");
           } else {
@@ -158,11 +158,14 @@ const DownloadPage = () => {
     // Stop polling after 10 minutes
     setTimeout(() => {
       clearInterval(pollInterval);
-      if (isDownloading) {
-        setIsDownloading(false);
-        toast.error("Download timeout");
-        setDownloadProgress({});
-      }
+      setIsDownloading((current) => {
+        if (current) {
+          toast.error("Download timeout");
+          setDownloadProgress({});
+          return false;
+        }
+        return current;
+      });
     }, 600000);
   };
 
@@ -283,8 +286,8 @@ const DownloadPage = () => {
                 type="submit"
                 disabled={isDownloading}
                 className={`px-8 py-4 text-white font-semibold rounded-lg transition duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${
-                  downloadType === "video" 
-                    ? "bg-blue-600 hover:bg-blue-700" 
+                  downloadType === "video"
+                    ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
@@ -363,8 +366,8 @@ const DownloadPage = () => {
                 type="submit"
                 disabled={isDownloading}
                 className={`px-8 py-4 text-white font-semibold rounded-lg transition duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${
-                  downloadType === "video" 
-                    ? "bg-blue-600 hover:bg-blue-700" 
+                  downloadType === "video"
+                    ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >

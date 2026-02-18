@@ -1,4 +1,6 @@
 # YouTube Script Generator .gitignore
+# Claude
+.Claude
 
 # Python
 __pycache__/

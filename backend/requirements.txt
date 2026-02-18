@@ -13,3 +13,5 @@ pydub
 ffmpeg-python
 python-dotenv
 email-validator
+openai-whisper
+pandas

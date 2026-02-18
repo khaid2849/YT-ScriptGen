@@ -1,7 +1,19 @@
-import whisper
 import os
 from typing import Dict, List
 from ..config import settings
+
+try:
+    import whisper
+    if not hasattr(whisper, "load_model"):
+        raise ImportError(
+            "The installed 'whisper' package is not openai-whisper. "
+            "Run: pip uninstall whisper && pip install openai-whisper"
+        )
+except (ImportError, TypeError) as _whisper_err:
+    raise ImportError(
+        "Whisper transcription library is not properly installed. "
+        "Run: pip install openai-whisper"
+    ) from _whisper_err
 
 
 class WhisperTranscriber:
