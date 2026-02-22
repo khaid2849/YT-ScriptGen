@@ -8,8 +8,8 @@ from ..config import settings
 
 class YouTubeDownloader:
     def __init__(self):
-        self.output_path = settings.TEMP_AUDIO_PATH
-        self.video_output_path = os.path.join(settings.TEMP_AUDIO_PATH, "videos")
+        self.output_path = settings.TEMP_PATH
+        self.video_output_path = os.path.join(settings.TEMP_PATH, "videos")
         os.makedirs(self.output_path, exist_ok=True)
         os.makedirs(self.video_output_path, exist_ok=True)
 

@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/2")
     
     # File Paths
-    TEMP_AUDIO_PATH: str = "./temp_audio"
+    TEMP_PATH: str = "./temp"
     GENERATED_SCRIPTS_PATH: str = "./generated_scripts"
     
     # Whisper Model
@@ -46,5 +46,5 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Create directories if they don't exist
-os.makedirs(settings.TEMP_AUDIO_PATH, exist_ok=True)
+os.makedirs(settings.TEMP_PATH, exist_ok=True)
 os.makedirs(settings.GENERATED_SCRIPTS_PATH, exist_ok=True)
