@@ -3,62 +3,73 @@ version: '3.8'
 services:
   db:
     image: postgres:15
+    restart: unless-stopped
     environment:
       POSTGRES_DB: scriptgen
       POSTGRES_USER: scriptgen_user
       POSTGRES_PASSWORD: scriptgen_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scriptgen_user -d scriptgen"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     environment:
       DATABASE_URL: postgresql://scriptgen_user:scriptgen_password@db/scriptgen
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - whisper_cache:/root/.cache/whisper
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   celery:
     build: ./backend
+    restart: unless-stopped
     command: celery -A app.workers.celery_app worker --loglevel=info
-    volumes:
-      - ./backend:/app
     environment:
       DATABASE_URL: postgresql://scriptgen_user:scriptgen_password@db/scriptgen
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - whisper_cache:/root/.cache/whisper
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
-    build: ./frontend
-    command: npm start
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: /api/v1
+    restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      REACT_APP_API_URL: http://localhost:8000/api/v1
+      - "3000:80"
     depends_on:
       - backend
 
 volumes:
   postgres_data:
+  whisper_cache:
